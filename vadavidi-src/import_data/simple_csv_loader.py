@@ -1,10 +1,10 @@
-# The CSV simple importer module
+# The CSV simple loader module
 
-from base_import import CommonImporter
+from base_loader import CommonLoader
 from datas import Table, Entry
 
-# The simple line-breaking and lines-splitting importer
-class SimpleCSVImporter(CommonImporter):
+# The simple line-breaking and lines-splitting loader
+class SimpleCSVLoader(CommonLoader):
 	# the fields separator
 	separator = "\t"
 	
@@ -36,10 +36,10 @@ class SimpleCSVImporter(CommonImporter):
 ########################################################################
 if __name__== "__main__":
 	print("Runining simple CSV import");
-	importer = SimpleCSVImporter()
-	importer.input_file = "../testdata/first.csv"
+	loader = SimpleCSVLoader()
+	loader.input_file = "../testdata/first.csv"
 	schema = {"first": "str", "number": "int", "second": "str"}
 	
-	table = importer.run(schema)
+	table = loader.run(schema)
 	print(table)
 	table.printit()

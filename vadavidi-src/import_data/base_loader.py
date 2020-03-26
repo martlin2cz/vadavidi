@@ -1,10 +1,10 @@
-# The base importers module
+# The base loaders module
 
 from datas import Table, Entry
 from abc import ABC, abstractmethod
 
-# The general importer
-class BaseImporter(ABC):
+# The general loader
+class BaseLoader(ABC):
 	# the file we are inputing from
 	input_file = ""
 	
@@ -27,7 +27,7 @@ class BaseImporter(ABC):
 	def analyse(self, schema, raw):
 		yield Exception("Implement me!");
 
-class CommonImporter(BaseImporter):
+class CommonLoader(BaseLoader):
 	
 	def analyse(self, schema, raw):
 		print("common")
