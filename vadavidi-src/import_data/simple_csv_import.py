@@ -1,21 +1,23 @@
 # The CSV simple importer module
 
-from base_import import BaseImporter
+from base_import import CommonImporter
 from datas import Table, Entry
 
 # The simple line-breaking and lines-splitting importer
-class SimpleCSVImporter(BaseImporter):
+class SimpleCSVImporter(CommonImporter):
 	# the fields separator
 	separator = "\t"
 	
-	def run(self, schema):
+	def parse(self, schema):
 		lines = self.load_lines()
 		#print(lines)
 		
 		entries = list(map(lambda line: self.line2entry(schema, line), lines))
 		
-		#print(entries);
+		#print(entries)
 		return Table(schema, entries)
+	
+	####################################################################
 	
 	# loads the lines as a array (from self.input_file)
 	def load_lines(self):
@@ -36,7 +38,7 @@ if __name__== "__main__":
 	print("Runining simple CSV import");
 	importer = SimpleCSVImporter()
 	importer.input_file = "../testdata/first.csv"
-	schema = {"first": "str", "number": "num", "second": "str"}
+	schema = {"first": "str", "number": "int", "second": "str"}
 	
 	table = importer.run(schema)
 	print(table)

@@ -26,7 +26,7 @@ class Table:
 	def __str__(self):
 		return "Table" + "; ".join(list(map( \
 			lambda entry: ("[" + ", ".join(list(map( \
-				lambda field: ("(" + field + "=" + entry.value(field) + ")"), \
+				lambda field: ("(" + field + "=" + str(entry.value(field)) + ")"), \
 				self.schema))) + "]"), \
 			self.entries)))
 			
@@ -35,4 +35,4 @@ class Table:
 		print("\t".join(map(lambda field: (field + ":" + self.schema[field]), \
 							self.schema.keys())))
 		for entry in self.entries:
-			print("\t\t".join(entry.atoms.values()))
+			print("\t\t".join(map(str, entry.atoms.values())))
