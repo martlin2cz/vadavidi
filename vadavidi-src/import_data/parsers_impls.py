@@ -2,6 +2,7 @@
 
 import csv
 from lxml import etree
+import re
 
 from typing import Mapping
 from datas import Schema, Entry, Table
@@ -102,7 +103,36 @@ class XMLElementParser(IteratingParser):
 		partNodes = partXpath(fractionElem) 
 		part = partNodes[0]
 		return (fieldName, part) 
+	
+########################################################################
+########################################################################
+# The parser general files
+class PatternBasedLinedParser(LinesSplittingParser):
+	# the pattern of the line
+	pattern: str
+	# the mapping of the matches indexes to the fieldNames
+	matchers: Mapping[str, int]
+	# just the compiled pattern
+	patternRe: None
+	
+	# runs the parsing itself
+	def parse(self, schema, file_name):
+		self.patternRe = re.compile(self.pattern)
 		
+		return super().parse(schema, file_name)
+	
+	# converts given line to entry
+	def parseLine(self, ordnum, line, schema):
+		matcher = self.patternRe.findall(line)
+		matches = matcher[0]
+		
+		values = dict(map(
+				lambda fieldName: (fieldName, matches[self.matchers[fieldName]]), 
+				schema.listFieldNames()))
+		
+		return Entry(ordnum, values)	
+
+
 ########################################################################
 ########################################################################
 if __name__== "__main__":
@@ -149,6 +179,16 @@ if __name__== "__main__":
 	parser.fieldsPaths = {"first": "first/text()", "number": "number/text()", "second": "second/text()"}
 	input_file = "../testdata/fifth.xml"
 	
+	table = parser.parse(schema, input_file)
+	print(table)
+	table.printit()
+	
+	print("Runining Pattern based parser")
+	parser = PatternBasedLinedParser()
+	parser.pattern = "([^\:]+)\: ([\d]+) \(([^\)]+)\)";
+	parser.matchers = {"first": 0, "number": 1, "second": 2}
+	input_file = "../testdata/sixth.txt"
+
 	table = parser.parse(schema, input_file)
 	print(table)
 	table.printit()
