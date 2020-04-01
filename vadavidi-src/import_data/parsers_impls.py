@@ -1,10 +1,13 @@
 # The base module for parsers
 
 import csv
+from lxml import etree
 
+from typing import Mapping
 from datas import Schema, Entry, Table
 from base_parsers import LinesSplittingParser, IteratingParser
 from datas_util import MutableTable
+
 
 
 ########################################################################
@@ -49,11 +52,11 @@ class CSVParser(IteratingParser):
 								strict = self.strict)
 			return list(reader)
 		
-	# converts given fraction to entry
-	def parseFraction(self, ordnum, fraction, schema):
+	# converts given fractionRecord to entry
+	def parseFraction(self, ordnum, fractionRecord, schema):
 		values = dict(list(map(
 						lambda fn,val: (fn, val),
-						schema.listFieldNames(), fraction)));		
+						schema.listFieldNames(), fractionRecord)));		
 		return Entry(ordnum, values)
 	
 ########################################################################
@@ -68,6 +71,37 @@ class ExcelCSVParser(CSVParser):
 	quotechar = '"'
 	skipinitialspace = 0
 	strict = 0
+		
+########################################################################
+########################################################################
+# The parser of XML files iterating over specified elements
+class XMLElementParser(IteratingParser):
+	# the xpaths for the values lookup
+	# the xpath to list all the elements
+	elemPath: str
+	# the xpaths mapping to particular fieldNames
+	fieldsPaths: Mapping[str, str]
+	
+	# converts the input file to list of fractions
+	def fracte(self, schema, file_name):
+		with open(file_name, newline='') as xmlfile:
+			tree = etree.parse(xmlfile)
+			elemXpath = etree.XPath(self.elemPath)
+			return elemXpath(tree)
+
+	# converts given fractionElem to entry
+	def parseFraction(self, ordnum, fractionElem, schema):
+		values = dict(list(map(lambda fn: self.parsePart(fractionElem, fn),
+						schema.listFieldNames())));		
+		return Entry(ordnum, values)
+
+	# parses the given fieldName from given fractionElem
+	def parsePart(self, fractionElem, fieldName):
+		partPath = self.fieldsPaths.get(fieldName) 
+		partXpath = etree.XPath(partPath) 
+		partNodes = partXpath(fractionElem) 
+		part = partNodes[0]
+		return (fieldName, part) 
 		
 ########################################################################
 ########################################################################
@@ -94,6 +128,26 @@ if __name__== "__main__":
 	print("Runining Excel CSV parser")
 	parser = ExcelCSVParser()
 	input_file = "../testdata/third.csv"
+	
+	table = parser.parse(schema, input_file)
+	print(table)
+	table.printit()
+	
+	print("Runining XML parser 1")
+	parser = XMLElementParser()
+	parser.elemPath = "/records/record";
+	parser.fieldsPaths = {"first": "@first", "number": "@number", "second": "@second"}
+	input_file = "../testdata/fourth.xml"
+	
+	table = parser.parse(schema, input_file)
+	print(table)
+	table.printit()
+	
+	print("Runining XML parser 2")
+	parser = XMLElementParser()
+	parser.elemPath = "/records/record";
+	parser.fieldsPaths = {"first": "first/text()", "number": "number/text()", "second": "second/text()"}
+	input_file = "../testdata/fifth.xml"
 	
 	table = parser.parse(schema, input_file)
 	print(table)

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<records>
+	<record>
+		<first>Lorem.</first>
+		<number>420</number>
+		<second>$foo</second>
+	</record>
+	
+	<record>
+		<first>Ipsum.</first>
+		<number>990</number>
+		<second>$bar</second>
+	</record>
+	
+	<record>
+		<first>Dolor.</first>
+		<number>110</number>
+		<second>$baz</second>
+	</record>
+	
+	<record>
+		<first>Sit.</first>
+		<number>0</number>
+		<second>$aux</second>
+	</record>
+	
+	<record>
+		<first>Amet.</first>
+		<number>100</number>
+		<second>$qux</second>
+	</record>
+</records>
+
