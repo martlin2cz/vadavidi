@@ -21,7 +21,7 @@ class Schema:
 	
 	# just __str__
 	def __str__(self):
-		return "Schema(" + ", ".join(map(
+		return "Schema:(" + ", ".join(map(
 			lambda fn: (fn + " of " + self.typeOf(fn)),
 			self.listFieldNames())) + ")"
 	
@@ -32,16 +32,20 @@ class Schema:
 class Entry:
 	# the order number
 	ordnum: int
-	# maps field names to values
+	# maps fieldNames to values
 	values: Mapping[str, Any]
 
 	# returns the value of the given fieldName
 	def value(self, fieldName):
 		return self.values[fieldName]
+	
+	# returns the order number of this entry
+	def ordernum(self):
+		return self.ordnum;
 		
 	# just the __str__
 	def __str__(self):
-		return "Entry " + str(self.ordnum) + ":" + str(self.values)
+		return "Entry:" + str(self.ordnum) + ":" + str(self.values)
 	
 ########################################################################
 # The whole datatable, list of entries with schema
@@ -54,22 +58,24 @@ class Table:
 	
 	# just the __str__
 	def __str__(self):
-		return "Table" + "; ".join(list(map( \
-			lambda entry: ("[" + ", ".join(list(map( \
+		return "Table:" + "; ".join(list(map( \
+			lambda entry: (str(entry.ordernum()) + "[" + ", ".join(list(map( \
 				lambda fieldName: ("(" + fieldName + "=" + str(entry.value(fieldName)) + ")"), \
 				self.schema.listFieldNames()))) + "]"), \
 			self.entries)))
 			
 	# prints the table simply
 	def printit(self):
-		print("\t| ".join(map(
-			lambda fieldName: (fieldName + ":" + self.schema.typeOf(fieldName)), \
-			self.schema.listFieldNames())))
+		print("NO \t| " \
+			+ "\t| ".join(map( \
+				lambda fieldName: (fieldName + ":" + self.schema.typeOf(fieldName)), \
+				self.schema.listFieldNames())))
 			
 		for entry in self.entries:
-			print("\t\t| ".join(map(
-				lambda fieldName: str(entry.value(fieldName)), 
-				self.schema.listFieldNames())))
+			print(str(entry.ordernum()) + "\t| " \
+				+ "\t\t| ".join(map(
+					lambda fieldName: str(entry.value(fieldName)), 
+					self.schema.listFieldNames())))
 
 
 ########################################################################
