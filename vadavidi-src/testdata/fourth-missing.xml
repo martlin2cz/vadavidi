@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<records>
+	<record first="Llorem" number="42" second="FOOL" />
+	<record first="Iipsum" number="99" second="BARS" />
+	<record first="Ddolor" number="111" second="BAZY" />
+	<record number="0" second="AUXL" />
+	<record first="Aamet" />	
+</records>

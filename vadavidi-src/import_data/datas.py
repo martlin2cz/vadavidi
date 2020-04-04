@@ -47,6 +47,16 @@ class Entry:
 	def __str__(self):
 		return "Entry:" + str(self.ordnum) + ":" + str(self.values)
 	
+	# validates the values agains the schema (only field names) 
+	# and constructs entry
+	@staticmethod
+	def create(schema, ordnum, values):
+		missing = schema.listFieldNames() - values.keys()
+		if len(missing) > 0:
+			raise ValueError("Missing following fields: " + ", ".join(missing))
+		
+		return Entry(ordnum, values) 
+	
 ########################################################################
 # The whole datatable, list of entries with schema
 @dataclass
@@ -59,9 +69,9 @@ class Table:
 	# just the __str__
 	def __str__(self):
 		return "Table:" + "; ".join(list(map( \
-			lambda entry: (str(entry.ordernum()) + "[" + ", ".join(list(map( \
-				lambda fieldName: ("(" + fieldName + "=" + str(entry.value(fieldName)) + ")"), \
-				self.schema.listFieldNames()))) + "]"), \
+			lambda entry: ("{0} [{1}]".format(entry.ordernum(), ", ".join(list(map( \
+				lambda fieldName: ("({0}={1})".format(fieldName, str(entry.value(fieldName)))), \
+				self.schema.listFieldNames()))))), \
 			self.entries)))
 			
 	# prints the table simply
@@ -86,6 +96,14 @@ if __name__== "__main__":
 	
 	entry1 = Entry(1, {'foo': 'Karel', 'bar': 42, 'baz': 'TODO', 'aux': 'FIXED'})
 	print(entry1)
+	
+	entry1 = Entry.create(schema, 2, {'foo': 'Jirka', 'bar': 99, 'baz': 'FILLME', 'aux': 'DYNAMIC'})
+	print(entry1)
+	
+	try:
+		Entry.create(schema, 2, {'foo': 'Franta',  'baz': 'FIXME'})
+	except Exception as ex:
+		print("Expected error: " + str(ex));
 	
 	table = Table(schema, [entry1])
 	print(table)

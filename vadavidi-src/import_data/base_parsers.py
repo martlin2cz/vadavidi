@@ -12,6 +12,12 @@ class BaseParser(ABC):
 	@abstractmethod
 	def parse(self, schema, file_name):
 		yield Exception("Implement me!");
+		
+	# reports that the entry could not be parsed
+	def reportInvalid(self, ordnum, context, reason):
+		print("Entry {0} cannot be parsed, because: {1}".format(ordnum, reason))
+		print("{0}".format(context))
+		print()
 
 ########################################################################
 # The iterating parser
@@ -22,8 +28,13 @@ class IteratingParser(BaseParser):
 		fractions = self.fracte(schema, file_name)
 		table = MutableTable(schema)
 		for ordnum, fraction in enumerate(fractions):
-			entry = self.parseFraction(ordnum, fraction, schema)
-			table.add(entry)
+			try:
+				entry = self.parseFraction(ordnum, fraction, schema)
+			except Exception as ex:
+				context = self.stringifyFraction(fraction)
+				self.reportInvalid(ordnum, context, str(ex))
+			else:
+				table.add(entry)
 
 		return table.toTable()
 
@@ -35,6 +46,11 @@ class IteratingParser(BaseParser):
 	# converts given fraction to entry
 	@abstractmethod
 	def parseFraction(self, ordnum, fraction, schema):
+		yield Exception("Implement me!");
+	
+	# converts given fraction ho user-readable string
+	@abstractmethod	
+	def stringifyFraction(self, fraction):
 		yield Exception("Implement me!");
 
 ########################################################################
@@ -61,4 +77,8 @@ class LinesSplittingParser(IteratingParser):
 	def parseLine(self, ordnum, line, schema):
 		yield Exception("Implement me!");
 
+	# converts given fraction ho user-readable string
+	def stringifyFraction(self, line):
+		return line
+		
 ########################################################################
