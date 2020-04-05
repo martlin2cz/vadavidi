@@ -66,6 +66,14 @@ class Table:
 	# list of Entries
 	entries: List[Entry]
 	
+	# returns the count of the entries
+	def count(self):
+		return len(self.entries)
+	
+	# just lists all the entries
+	def list(self):
+		return self.entries
+	
 	# just the __str__
 	def __str__(self):
 		return "Table:" + "; ".join(list(map( \

@@ -53,7 +53,7 @@ class TestParsers(unittest.TestCase):
 		self.run_parser(parser, "../testdata/sixth-missing.txt")
 
 
-	## 
+	# runs the parsing
 	def run_parser(self, parser, input_file):
 		print("=======================================================")
 		print("RUNNING PARSER: " + str(parser));
