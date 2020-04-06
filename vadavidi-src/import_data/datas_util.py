@@ -19,7 +19,16 @@ class DatasUtil:
 	# Creates empty table of given schema
 	@staticmethod
 	def emptyTable(schema):
-		return Table(schema, {})
+		return Table(schema, [])
+
+	# Creates empty table of given schema
+	@staticmethod
+	def joinTables(first, second):
+		schema = first.schema
+		entries = (first.list()) + (second.list())
+		
+		return Table(schema, entries)
+
 
 	# adds the given field to given schema
 	@staticmethod

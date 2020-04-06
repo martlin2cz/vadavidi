@@ -12,16 +12,16 @@ class DefaultValueConverter(ValueConverter):
 
 	# converts value of field in given context entry
 	def convertValue(self, rawEntry, fieldName, fieldType, rawValue):
-		if fieldType == "string":
+		if fieldType in ("str", "string"):
 			return rawValue
 			
-		if fieldType == "integer":
+		if fieldType in ("int", "integer"):
 			return int(rawValue)
 			
-		if fieldType == "decimal":
+		if fieldType in ("float", "decimal"):
 			return float(rawValue)	
 		
-		if fieldType == "boolean":
+		if fieldType in ("bool", "boolean"):
 			return rawValue == "true"
 				
 		raise ValueError("Unsupported field '{0}' of type '{1}' with value '{2}'" \
