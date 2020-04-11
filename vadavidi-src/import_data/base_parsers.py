@@ -1,8 +1,9 @@
 # The base module for parsers
 
-from datas import Schema, Entry, Table
 from abc import ABC, abstractmethod
-from datas_util import MutableTable
+
+from import_data.datas_util import MutableTable
+
 
 ########################################################################
 # The (base) parser.

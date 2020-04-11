@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import List, Mapping, Any
 
+
 ########################################################################
 # The schema of the table. The table heading, the list of the fields
 # the list of the fields names with associated type specifier

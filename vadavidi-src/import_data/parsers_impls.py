@@ -1,14 +1,12 @@
 # The base module for parsers
 
 import csv
-from lxml import etree
 import re
-
 from typing import Mapping
-from datas import Schema, Entry, Table
-from base_parsers import LinesSplittingParser, IteratingParser
-from datas_util import MutableTable
+from lxml import etree
 
+from import_data.base_parsers import LinesSplittingParser, IteratingParser
+from import_data.datas import Entry
 
 
 ########################################################################

@@ -1,11 +1,10 @@
 # The impl modules with dumpers
 
-from typing import Mapping
-from datas import Schema, Entry, Table
-from base_dumpers import CommonFileDumper, BaseExistingFileHandler
+import os
 import re
 import sqlite3
-import os
+
+from import_data.base_dumpers import CommonFileDumper, BaseExistingFileHandler
 
 
 ########################################################################

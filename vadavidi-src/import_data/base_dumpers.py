@@ -1,9 +1,10 @@
 # The base module for parsers
 
-from datas import Schema, Entry, Table
 from abc import ABC, abstractmethod
 import re
+
 import os.path as path
+
 
 ########################################################################
 # The (base) dumper.
@@ -20,7 +21,7 @@ class BaseExistingFileHandler(ABC):
 	
 	# handles the existing file
 	@abstractmethod
-	def handle(datasetName, fileName):
+	def handle(self, datasetName, fileName):
 		yield Exception("Implement me!");
 
 ########################################################################

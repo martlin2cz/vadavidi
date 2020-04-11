@@ -1,13 +1,14 @@
 # the loaders impls module
 
 from abc import ABC, abstractmethod
-from typing import List, Mapping, Any
-from base_loaders import BaseLoader
-from datas import Schema, Entry, Table
-from datas_util import DatasUtil
-from base_parsers import BaseParser
-from base_converters import BaseConverter
 import re
+from typing import List, Mapping
+
+from import_data.base_converters import BaseConverter
+from import_data.base_loaders import BaseLoader
+from import_data.base_parsers import BaseParser
+from import_data.datas_util import DatasUtil
+
 
 ########################################################################
 # The loader running on only one input file
@@ -80,7 +81,7 @@ class NoFileMatchingFileMatcher(BaseFileMatcher):
 	
 	# matches the given file?
 	def matches(self, file_name):
-		return false
+		return False
 		
 # TODO xml schema / structure matcher
 ########################################################################

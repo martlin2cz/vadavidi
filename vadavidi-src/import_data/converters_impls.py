@@ -1,10 +1,12 @@
 # the module for the impls of the converters
 
-from typing import Mapping
-from datas import Schema, Entry, Table
-from base_converters import ValuesConvertingConverter, ValueConverter
-from parse import parse
+from ast import parse
 from datetime import datetime
+
+
+from import_data.base_converters import ValueConverter, \
+	ValuesConvertingConverter
+
 
 ########################################################################
 # The default value converter. Supports only "str" and "int" types

@@ -1,9 +1,12 @@
 # the test module for the dumpers
 
 import unittest
-from datas import Schema, Entry, Table
-from datas_util import MutableTable
-from dumpers_impls import SimpleCSVDumper, SQLiteDumper, DeletingHandler, SimplyBackupingHandler
+
+from import_data.datas import Schema, Entry
+from import_data.datas_util import MutableTable
+from import_data.dumpers_impls import SimpleCSVDumper, DeletingHandler, \
+	SQLiteDumper, SimplyBackupingHandler
+
 
 ########################################################################
 # tests the parsers

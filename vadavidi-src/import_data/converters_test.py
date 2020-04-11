@@ -1,10 +1,12 @@
 # the test module for the converters
 
 import unittest
-from datas import Schema, Entry, Table
-from datas_util import MutableTable
-from base_converters import ValuesConvertingConverter
-from converters_impls import DefaultValuesConvertingConverter, DefaultValueConverter, FormattedParserValueConverter, DatetimeValueConverter
+
+from import_data.converters_impls import DefaultValuesConvertingConverter, \
+	DefaultValueConverter, FormattedParserValueConverter, DatetimeValueConverter
+from import_data.datas import Schema, Entry
+from import_data.datas_util import MutableTable
+
 
 ########################################################################
 # tests the converters

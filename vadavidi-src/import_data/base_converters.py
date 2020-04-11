@@ -1,10 +1,10 @@
 # The base module for converters
 
-from datas import Table, Entry
-from datas_util import MutableTable
 from abc import ABC, abstractmethod
 from typing import Mapping
 
+from import_data.datas import Entry
+from import_data.datas_util import MutableTable
 
 
 ########################################################################
@@ -40,7 +40,7 @@ class EntriesConvertingConverter(BaseConverter):
 
 	# converts the given entry
 	@abstractmethod
-	def convertEntry(schema, rawEntry):
+	def convertEntry(self, schema, rawEntry):
 		yield Exception("Implement me!");
 	
 ########################################################################
