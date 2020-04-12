@@ -18,7 +18,7 @@ class Schema:
 	
 	# lists all the typeNames
 	def listFieldNames(self):
-		return self.fields.keys()
+		return list(self.fields.keys())
 	
 	# just __str__
 	def __str__(self):
