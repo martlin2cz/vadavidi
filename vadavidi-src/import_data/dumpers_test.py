@@ -2,8 +2,8 @@
 
 import unittest
 
-from import_data.datas import Schema, Entry
-from import_data.datas_util import MutableTable
+from common.datas import Schema, Entry
+from common.datas_util import MutableTable
 from import_data.dumpers_impls import SimpleCSVDumper, DeletingHandler, \
 	SQLiteDumper, SimplyBackupingHandler
 
@@ -18,6 +18,7 @@ class TestDumpers(unittest.TestCase):
 		
 		dumper = SimpleCSVDumper()
 		dumper.existingFileHandler = DeletingHandler()
+		dumper.csv.separator = ';'
 		
 		self.runDumper(table, dumper)
 		

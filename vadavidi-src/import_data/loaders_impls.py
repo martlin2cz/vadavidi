@@ -7,7 +7,7 @@ from typing import List, Mapping
 from import_data.base_converters import BaseConverter
 from import_data.base_loaders import BaseLoader
 from import_data.base_parsers import BaseParser
-from import_data.datas_util import DatasUtil
+from common.datas_util import DatasUtil
 
 
 ########################################################################

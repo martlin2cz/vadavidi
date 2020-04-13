@@ -3,7 +3,7 @@
 import unittest
 
 from import_data.converters_impls import DefaultValuesConvertingConverter
-from import_data.datas import Schema
+from common.datas import Schema
 from import_data.loaders_impls import FileNameMatcher, FirstLineMatcher, \
 	SingleFileLoader, MultiFilesLoader, AllFilesMatchingMatcher
 from import_data.parsers_impls import SimpleCSVParser, XMLElementParser

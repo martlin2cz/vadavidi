@@ -2,7 +2,7 @@
 
 from typing import List, Mapping, Any
 
-from datas import *
+from common.datas import *
 
 
 ########################################################################

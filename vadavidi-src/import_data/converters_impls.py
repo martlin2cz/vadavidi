@@ -2,7 +2,7 @@
 
 from ast import parse
 from datetime import datetime
-
+from typing import Mapping
 
 from import_data.base_converters import ValueConverter, \
 	ValuesConvertingConverter

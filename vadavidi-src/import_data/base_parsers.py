@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from import_data.datas_util import MutableTable
+from common.datas_util import MutableTable
 
 
 ########################################################################

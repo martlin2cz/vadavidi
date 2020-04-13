@@ -10,6 +10,10 @@ class Query:
     xAxisSpecifier: str
     yAxisSpecifiers: Mapping[str,str]
     
+        
+    # just __str__
+    def __str__(self):
+        return "Query: " + self.xAxisSpecifier + " -> " + self.yAxisSpecifier
 
 ################################################################################
 class BaseOutporter(ABC):

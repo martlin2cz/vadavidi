@@ -2,9 +2,8 @@
 
 import unittest
 
-
-from import_data.datas import Schema
-from import_data.parsers_impls import SimpleCSVParser, CSVParser, ExcelCSVParser,\
+from common.datas import Schema
+from import_data.parsers_impls import SimpleCSVParser, CSVParser, ExcelCSVParser, \
 	XMLElementParser, PatternBasedLinedParser
 
 

@@ -4,54 +4,37 @@ import os
 import re
 import sqlite3
 
-from import_data.base_dumpers import CommonFileDumper, BaseExistingFileHandler
+from common.simple_csv import SimpleCSV
+from import_data.base_dumpers import CommonFileDumper, BaseExistingFileHandler, \
+	FileDumper
 
 
 ########################################################################
 ########################################################################
 # Just the simple testing dumper dumping to primitive CSV
-class SimpleCSVDumper(CommonFileDumper):
-	# the simple delimiter of the values
-	delimiter = ';'
+class SimpleCSVDumper(FileDumper):
+	csv = SimpleCSV()
 	
 	# constructor
 	def __init__(self):
-		self.fileExtension = 'csv'
+		self.namer.extension = 'csv'
 
-	# opens the file, returns the handle
-	def openTheFile(self, datasetName, fileName):
-		return open(fileName, "w")
 
-	# dumps some header (the schema, i guess)
-	def dumpHeader(self, datasetName, fileName, fileHandle, schema):
-		fileHandle.write("ordernum")
-		fileHandle.write(self.delimiter)
+	def dumpToFile(self, datasetName, fileName, table):
+		schema = table.schema
+		lines = [self.csv.schemaToLine(schema)] \
+			+ list(map(lambda e: self.csv.entryToLine(schema, e),
+					table.list()))
 			
-		for fieldName in schema.listFieldNames():
-			fileHandle.write(fieldName)
-			fileHandle.write(self.delimiter)
+		self.csv.saveLines(lines, fileName)
 		
-		fileHandle.write("\n")
-
-	# dumps the body (entries)
-	def dumpBody(self, datasetName, fileName, fileHandle, schema, entries):
-		for entry in entries:
-			fileHandle.write(str(entry.ordernum()))
-			fileHandle.write(self.delimiter)
-			
-			for fieldName in schema.listFieldNames():
-				value = entry.value(fieldName)
-				fileHandle.write(str(value))
-				fileHandle.write(self.delimiter)
-			fileHandle.write("\n")
-	
 ########################################################################
 # The dumper dumping to the sqlite database
 class SQLiteDumper(CommonFileDumper):
 
 	# constructor
 	def __init__(self):
-		self.fileExtension = 'db'
+		self.namer.extension = 'db'
 	
 	# opens the file, returns the handle
 	def openTheFile(self, datasetName, fileName):

@@ -3,10 +3,12 @@
 import csv
 import re
 from typing import Mapping
+
 from lxml import etree
 
+from common.datas import Entry
+from common.simple_csv import SimpleCSV
 from import_data.base_parsers import LinesSplittingParser, IteratingParser
-from import_data.datas import Entry
 
 
 ########################################################################
@@ -14,16 +16,23 @@ from import_data.datas import Entry
 # The simple CSV parser.
 # Assumes values on lines separated with one simple separator,
 # no quotes, no multilines, no escaped separators.
-class SimpleCSVParser(LinesSplittingParser):
+class SimpleCSVParser(IteratingParser):
 	# the fields separator
 	separator = "\t"
-	
-	# converts given line to entry
-	def parseLine(self, ordnum, line, schema):
-		parts = line.split(self.separator)
-		values = dict(map(lambda part,field: (field, part), parts, schema.listFieldNames()))
+	# the csv module impl
+	csv = SimpleCSV()
+
+	# converts the input file to list of fractions
+	def fracte(self, schema, file_name):
+		return self.csv.listLines(file_name)
 		
-		return Entry.create(schema, ordnum, values)	
+	# converts given fraction to entry
+	def parseFraction(self, ordnum, fraction, schema):
+		return self.csv.lineToEntry(ordnum, schema, line)
+	
+	# converts given fraction ho user-readable string
+	def stringifyFraction(self, fraction):
+		return str(fraction)
 
 ########################################################################
 ########################################################################

@@ -4,8 +4,8 @@ import unittest
 
 from import_data.converters_impls import DefaultValuesConvertingConverter, \
 	DefaultValueConverter, FormattedParserValueConverter, DatetimeValueConverter
-from import_data.datas import Schema, Entry
-from import_data.datas_util import MutableTable
+from common.datas import Schema, Entry
+from common.datas_util import MutableTable
 
 
 ########################################################################

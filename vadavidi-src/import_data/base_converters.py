@@ -3,8 +3,8 @@
 from abc import ABC, abstractmethod
 from typing import Mapping
 
-from import_data.datas import Entry
-from import_data.datas_util import MutableTable
+from common.datas import Entry
+from common.datas_util import MutableTable
 
 
 ########################################################################
