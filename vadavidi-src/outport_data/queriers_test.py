@@ -30,7 +30,7 @@ class QueriersTest(unittest.TestCase):
         table.printit()
         print("-- done --")
         
-        query = Query(x_axis_specifier = "foo", y_axis_specifiers = {"maxs of bar": "$bar.count", "count of baz": "$baz.count"})
+        query = Query(x_axis = "foo", y_axis_specifiers = {"maxs of bar": "$bar.count", "count of baz": "$baz.count"})
         
         result = querier.query(table, query)
         print("-- executed --")

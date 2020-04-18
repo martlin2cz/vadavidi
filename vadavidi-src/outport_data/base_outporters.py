@@ -11,13 +11,17 @@ from typing import Mapping
 ################################################################################
 @dataclass
 class Query:
-    x_axis_specifier: str
+    """ The query is in fact just mapping from x-axis to one or more y-axises.
+    """
+    # the x-axis field
+    x_axis: str
+    # the y-axis specifiers (fields or expressions)
     y_axis_specifiers: Mapping[str,str]
     
-        
+    
     # just __str__
     def __str__(self):
-        return "Query: " + self.x_axis_specifier + " -> " + self.y_axis_specifiers
+        return "Query: " + self.x_axis + " -> " + self.y_axis_specifiers
 
 ################################################################################
 class BaseOutporter(ABC):

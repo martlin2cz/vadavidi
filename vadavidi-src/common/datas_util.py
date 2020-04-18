@@ -6,6 +6,7 @@ extra classes are specified.
 from typing import List, Mapping, Any
 
 from common.datas import *
+from builtins import staticmethod
 
 
 ########################################################################
@@ -36,6 +37,12 @@ class DatasUtil:
 		entries = (first.list()) + (second.list())
 		
 		return Table(schema, entries)
+
+	@staticmethod
+	def column(table, field_name):
+		""" Returns the list of values of given field over the whole table """
+		
+		return list(map(lambda e: e[field_name], table))
 
 ########################################################################
 class RowsMutableTable:
@@ -87,20 +94,38 @@ class ColsMutableTable:
 		self.schema = table.schema
 		self.entries = table.entries
 
-	# TODO make the initial_value to be function entry -> value
-	def add_field(self, field_name, field_type, initial_value=None):
+	def add_field(self, field_name, field_type, value_computer=None):
 		""" Adds given field with given initial value """
 		
 		self.schema = DatasUtil.add_to_schema(self.schema, field_name, field_type)
 		
-		self.entries = list(map(lambda e: self.add_to_entry(
-				e, field_name, initial_value), self.entries))
+		self.entries = \
+			list((self.add_to_entry(i, e, field_name, value_computer))
+					for i,e in enumerate(self.entries))
+
+	def add_field_with_values(self, field_name, field_type, values):
+		""" Adds given field with given values """
+		
+		if len(values) != len(self.entries):
+			raise ValueError("Lists length mismatch: " + str(len(values))
+							 + " and " + str(len(self.entries)))
+		
+		value_computer = lambda ordernum, e: values[ordernum]
+		
+		return self.add_field(field_name, field_type, value_computer)
+		
 				
-	def add_to_entry(self, entry, field_name, initial_value):
+	def add_to_entry(self, ordernum, entry, field_name, value_computer):
 		""" Replaces given entry with entry with the new field """
 		
-		values = { **entry.values, **{field_name: initial_value} }
+		if value_computer:
+			value = value_computer(ordernum, entry)
+		else:
+			value = None
+			
+		values = { **entry.values, **{field_name: value} }
 		return Entry.create(self.schema, values)
+	
 	
 	def to_table(self):
 		""" Converts back to table """
@@ -124,8 +149,12 @@ if __name__ == "__main__":
 	print("=========")
 
 	cmt = ColsMutableTable(twr)
-	cmt.add_field("name", "str", None)
-	cmt.add_field("gender", "enum", "UNSPECIFIED")
+	cmt.add_field("name", "str", lambda o, e: e["foo"] * 10)
+	cmt.add_field("gender", "enum", None)
 	
 	twc = cmt.to_table()
 	twc.printit()
+	print("=========")
+	
+	print(DatasUtil.column(twc, "foo"))
+	

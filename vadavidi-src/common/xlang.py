@@ -18,6 +18,14 @@ class XLangExpression:
      
     # the items itself
     items: List[Any]
+    # TODO agregator
+    agregator: str 
+    
+    def to_python_str(self, entry_var_name):
+        return " ".join(list(map(
+            lambda i: ("{0}['{1}']".format(entry_var_name, i.field_name) \
+                        if isinstance(i, XLangField) else i), 
+            self.items)))
 
     def __str__(self):
         return "XLang[" + " ".join(map(str, self.items)) + "]"
@@ -48,10 +56,11 @@ class XLangParser:
             if (token.startswith("$")):
                 item = self.parse_token(schema, token)
                 result.append(item)
+                agregator = item.operation # FIXME HACK agregator
             else:
                 result.append(token)
         
-        return XLangExpression(result)
+        return XLangExpression(result, agregator)
 
     def parse_token(self, schema, token):
         """ Parses one single token (with xlang field) of the expression """
@@ -73,5 +82,6 @@ if __name__ == '__main__':
     parser = XLangParser()
     schema = Schema({"karel": "string"})
     
-    xle = parser.parse(schema, "abc   $karel.randomize jitka + 45")
+    xle = parser.parse(schema, "abc -  $karel.randomize * jitka + 45")
     print(xle)
+    print(xle.to_python_str("eee"))
