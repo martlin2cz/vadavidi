@@ -8,41 +8,66 @@ import re
 from typing import List, Any
 
 from common.datas import Schema
+from outport_data.base_queriers import EntryExpression, \
+    BaseExpressionNativeRenderer
+from outport_data.queriers_impls import DefaultQuerier
 
 
 ################################################################################
 @dataclass
-class XLangExpression:
+class XLangExpression(EntryExpression):
     """ The simple dataclass holding the list of items, plain strs or
-     XLangFields."""
+     XLangFieldReferences. """
      
     # the items itself
     items: List[Any]
-    # TODO agregator
-    agregator: str 
     
-    def to_python_str(self, entry_var_name):
-        return " ".join(list(map(
-            lambda i: ("{0}['{1}']".format(entry_var_name, i.field_name) \
-                        if isinstance(i, XLangField) else i), 
-            self.items)))
 
     def __str__(self):
         return "XLang[" + " ".join(map(str, self.items)) + "]"
 
-################################################################################  
+
+################################################################################
 @dataclass
-class XLangField:
-    """ The vadavidi field of the xlang expression. Has a field name and 
-    operation to do with that field. """
+class XLangFieldReference:
+    """ Just one item of the XLangExpression, which references the field """
     
-    # field name
     field_name: str
-    # operation
-    operation: str
 
     def __str__(self):
-        return "XLF[{0}.{1}]".format(self.field_name, self.operation)
+        return "Field[" + self.field_name + "]"
+
+################################################################################
+class XLangNativeRenderer(BaseExpressionNativeRenderer):
+    """ The expression native renderer for the XLang expressions """
+    
+    def to_native(self, expression, querier, entry_identifier):
+        if not isinstance(expression, XLangExpression):
+            raise ValueError("Not XLang expression")
+        
+        if isinstance(querier, DefaultQuerier):
+            return self.to_python_native(expression, entry_identifier)
+ 
+# FIXME SQLiteQuerier        
+#        if isinstance(querier, SQLiteQuerier):
+#            return self.to_sqllite_native(expression, entry_identifier)
+        
+        raise ValueError("Unsupported querier")
+
+    def to_python_native(self, expression, entry_identifier):
+        """ Converts the expression to pyhon native expression """
+        
+        return " ".join(list(map(
+            lambda i: ("{0}['{1}']".format(entry_identifier, i.field_name) \
+                        if isinstance(i, XLangFieldReference) else i),
+            expression.items)))
+    
+    def to_sqllite_native(self, expression, entry_identifier):
+        """ Converts the expression to sql native expression """
+        
+        raise Exception("TODO")
+            
+        
 ################################################################################    
 class XLangParser:
     """ The parser of the xlang expression strings. """
@@ -53,35 +78,34 @@ class XLangParser:
         tokens = re.split("\\s+", expr)
         result = []
         for token in tokens:
-            if (token.startswith("$")):
+            if (token.startswith("€")):
                 item = self.parse_token(schema, token)
                 result.append(item)
-                agregator = item.operation # FIXME HACK agregator
             else:
                 result.append(token)
         
-        return XLangExpression(result, agregator)
+        return XLangExpression(result)
 
     def parse_token(self, schema, token):
         """ Parses one single token (with xlang field) of the expression """
         
-        without_dolar = token[1:]
-        parts = without_dolar.split('.')
-        field_name = parts[0]
-        if len(parts) < 2:
-            raise ValueError(token + " not valid, no operation after " + field_name)
+        without_euro = token[1:]
         
-        if field_name not in schema:
-            raise ValueError(token + " not valid, " + field_name + " not known")
+        if without_euro not in schema:
+            raise ValueError("No such field " + without_euro) 
+        
+        field_name = without_euro
+        return XLangFieldReference(field_name)
 
-        operation = parts[1]
-        return XLangField(field_name, operation)
 
 ################################################################################    
 if __name__ == '__main__':
     parser = XLangParser()
     schema = Schema({"karel": "string"})
     
-    xle = parser.parse(schema, "abc -  $karel.randomize * jitka + 45")
+    xle = parser.parse(schema, "abc -  €karel * jitka + 45")
     print(xle)
-    print(xle.to_python_str("eee"))
+    
+    renderer = XLangNativeRenderer()
+    print(renderer.to_python_native(xle, "eee"))
+    print(renderer.to_sqllite_native(xle, "eee"))
