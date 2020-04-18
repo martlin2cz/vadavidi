@@ -1,25 +1,26 @@
-# the raisers impls package
-from outport_data.base_raisers import IteratingRaiser
+"""
+The implementations of the raisers.
+"""
+
 from common.simple_csv import SimpleCSV
 from common.utils import FilesNamer
+from outport_data.base_raisers import BaseRaiser
+
 
 ################################################################################
-class SimpleCSVRaiser(IteratingRaiser):
+class SimpleCSVRaiser(BaseRaiser):
+    """ The simple csv raiser. """
+    
     # the simple csv implementation
-    csv = SimpleCSV()
+    csv = SimpleCSV(True, True)
     # the namer of the file
     namer = FilesNamer() 
     
     def __init__(self):
         self.namer.extension = "csv"
     
-    # loads the items
-    def loadItems(self, datasetName):
-        fileName = self.namer.fileName(datasetName)
-        return self.csv.listLines(fileName) 
-
-    # converts the item to entry
-    def convertItem(self, datasetName, schema, ordnum, itemLine):
-        return self.csv.lineToEntry(ordnum, schema, itemLine)
+    def run(self, dataset_name, schema):
+        file_name = self.namer.file_name(dataset_name)
+        return self.csv.load_table(schema, file_name)
     
 ################################################################################

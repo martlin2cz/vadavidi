@@ -1,3 +1,7 @@
+"""
+The xlang expressions parser.
+"""
+
 from builtins import str
 from dataclasses import dataclass
 import re
@@ -9,6 +13,10 @@ from common.datas import Schema
 ################################################################################
 @dataclass
 class XLangExpression:
+    """ The simple dataclass holding the list of items, plain strs or
+     XLangFields."""
+     
+    # the items itself
     items: List[Any]
 
     def __str__(self):
@@ -17,38 +25,48 @@ class XLangExpression:
 ################################################################################  
 @dataclass
 class XLangField:
-    fieldName: str
+    """ The vadavidi field of the xlang expression. Has a field name and 
+    operation to do with that field. """
+    
+    # field name
+    field_name: str
+    # operation
     operation: str
 
     def __str__(self):
-        return "XLF[{0}.{1}]".format(self.fieldName, self.operation)
+        return "XLF[{0}.{1}]".format(self.field_name, self.operation)
 ################################################################################    
 class XLangParser:
-        
+    """ The parser of the xlang expression strings. """
+    
     def parse(self, schema, expr):
+        """ Parses the expression """
+        
         tokens = re.split("\\s+", expr)
         result = []
         for token in tokens:
             if (token.startswith("$")):
-                item = self.parseToken(schema, token)
+                item = self.parse_token(schema, token)
                 result.append(item)
             else:
                 result.append(token)
         
         return XLangExpression(result)
 
-    def parseToken(self, schema, token):
-        withoutDolar = token[1:]
-        parts = withoutDolar.split('.')
-        fieldName = parts[0]
-        if len(parts) < 2:
-            raise ValueError(token + " not valid, no operation after " + fieldName)
+    def parse_token(self, schema, token):
+        """ Parses one single token (with xlang field) of the expression """
         
-        if fieldName not in schema.listFieldNames():
-            raise ValueError(token + " not valid, " + fieldName + " not known")
+        without_dolar = token[1:]
+        parts = without_dolar.split('.')
+        field_name = parts[0]
+        if len(parts) < 2:
+            raise ValueError(token + " not valid, no operation after " + field_name)
+        
+        if field_name not in schema:
+            raise ValueError(token + " not valid, " + field_name + " not known")
 
         operation = parts[1]
-        return XLangField(fieldName, operation)
+        return XLangField(field_name, operation)
 
 ################################################################################    
 if __name__ == '__main__':

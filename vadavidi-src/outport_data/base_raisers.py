@@ -1,41 +1,51 @@
-# The base module for the raisers
-from abc import ABC, abstractmethod, abstractclassmethod
-from common.datas_util import MutableTable
+"""
+The raiser is the opposite of the dumper. It picks the stored table and loads it
+back to be used.
+"""
+from abc import ABC, abstractmethod
+from common.datas_util import RowsMutableTable
 
 ################################################################################
 class BaseRaiser(ABC):
+    """ The (base) raiser. Loads table of the dataset. """
     
     # runs the raise
     @abstractmethod
-    def run(self, datasetName, schema):
+    def run(self, dataset_name, schema):
+        """ Runs the raise, returns the risen table """
+        
         yield Exception("Implement me!");
 
 ################################################################################
 class IteratingRaiser(BaseRaiser):
+    """ The iterating raiser loads first some items, which are then converted
+    to entries. """
     
-    # runs the raise
-    def run(self, datasetName, schema):
-        items = self.loadItems(datasetName)
-        return self.convertItems(datasetName, schema, items)
+    def run(self, dataset_name, schema):
+        items = self.loadItems(dataset_name)
+        return self.convertItems(dataset_name, schema, items)
     
     
-    # loads the items
     @abstractmethod
-    def loadItems(self, datasetName):
+    def loadItems(self, dataset_name):
+        """ Loads the items """
+        
         yield Exception("Implement me!");    
     
-    # converts the items to entries
-    def convertItems(self, datasetName, schema, items):
-        result = MutableTable(schema)
-        for (ordnum, item) in enumerate(items):
-            entry = self.convertItem(datasetName, schema, ordnum, item)
+    def convertItems(self, dataset_name, schema, items):
+        """ Converts the items to entries """
+        
+        result = RowsMutableTable(schema)
+        for item in items:
+            entry = self.convert_item(dataset_name, schema, item)
             result.add(entry)
         
-        return result.toTable()
+        return result.to_table()
 
-    # converts the item to entry
     @abstractmethod
-    def convertItem(self, datasetName, schema, ordnum, item):
+    def convertItem(self, dataset_name, schema, item):
+        """ Converts the item to entry """
+        
         yield Exception("Implement me!");
 
 ################################################################################

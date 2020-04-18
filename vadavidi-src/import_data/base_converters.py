@@ -1,85 +1,96 @@
-# The base module for converters
+"""
+The base module for converters. Specifies the abstract converter, which maps 
+converts table of raw string tokens to table of particular typed values 
+(numbers, dates, etc.)
+"""
 
 from abc import ABC, abstractmethod
 from typing import Mapping
 
 from common.datas import Entry
-from common.datas_util import MutableTable
+from common.datas_util import RowsMutableTable
 
 
 ########################################################################
-# The (base) converter.
 class BaseConverter(ABC):
-
-	# runs the conversion itself	
+	""" The converter. """
+	
 	@abstractmethod
-	def convert(self, schema, raw):
-		print("converting");
+	def convert(self, raw):
+		""" Converts the given raw table to table with particularly typed 
+		values
+		"""
+		
 		yield Exception("Implement me!");
 
-	# reports that the value of the entry could not be converted
-	def reportInvalid(self, contextEntry, fieldName, rawValue, reason):
-		ordnum = contextEntry.ordernum()
-		print("Field {1}'s value '{2}' (of entry {0}) cannot be converted, because: {3}".format(ordnum, fieldName, rawValue, reason))
-		print("{0}".format(contextEntry))
+	def report_invalid(self, context_entry, field_name, raw_value, reason):
+		""" Reports that the value of the entry could not be converted """
+		
+		ordnum = context_entry.ordernum()
+		print("""Field {1}'s value '{2}' (of entry {0}) cannot be converted, 
+			because: {3}""".format(ordnum, field_name, raw_value, reason))
+		
+		print("{0}".format(context_entry))
 		print()
 
 ########################################################################
-# Converter using value converters
 class EntriesConvertingConverter(BaseConverter):
-	
-	# runs the conversion itself
-	def convert(self, schema, raw):
-		result = MutableTable(schema)
+	""" Converter using value converters. """
+
+	def convert(self, raw):
+		result = RowsMutableTable(raw.schema)
 		
 		for entry in raw.list():
-			converted = self.convertEntry(schema, entry)
-			result.add(converted)
+			converted = self.convert_entry(raw.schema, entry)
+			result += converted
 		
-		return result.toTable()	
+		return result.to_table()	
 
-	# converts the given entry
 	@abstractmethod
-	def convertEntry(self, schema, rawEntry):
+	def convert_entry(self, schema, raw_entry):
+		""" Converts the entry """
+		
 		yield Exception("Implement me!");
 	
 ########################################################################
 ########################################################################
-# The converter of one single value
 class ValueConverter(ABC):
+	""" The converter of one single value. """
 	
-	# converts value of field in given context entry
 	@abstractmethod
-	def convertValue(self, rawEntry, fieldName, fieldType, rawValue):
+	def convert_value(self, raw_entry, field_name, field_type, raw_value):
+		""" Converts value of field in given context entry """
+		
 		yield Exception("Implement me!");
 
 ########################################################################
-# Converter using value converters
 class ValuesConvertingConverter(EntriesConvertingConverter):
-	
-	# converts the given entry
-	def convertEntry(self, schema, rawEntry):
-		values = dict(map(
-			lambda fn: (fn, self.convertValue(schema, rawEntry, fn)),
-			schema.listFieldNames()))
-		
-		ordnum = rawEntry.ordernum()
-		return Entry.create(schema, ordnum, values)
+	""" Converter using value converters. """
 
-	# converts the value of the given entry's field
-	def convertValue(self, schema, rawEntry, fieldName):
-		fieldType = schema.typeOf(fieldName)
-		converter = self.pickTheValueConverter(schema, fieldName, fieldType)
+	def convert_entry(self, schema, raw_entry):
+		values = dict(map(
+			lambda fn: (fn, self.convert_value(schema, raw_entry, fn)),
+			schema))
+		
+		return Entry.create(schema, values)
+
+	def convert_value(self, schema, raw_entry, field_name):
+		""" Converts the value of the given entry's field """
+		
+		field_type = schema[field_name]
+		converter = self.pick_the_value_converter(schema, field_name, field_type)
 			
-		rawValue = rawEntry.value(fieldName)
+		raw_value = raw_entry.value(field_name)
 		try:
-			return converter.convertValue(rawEntry, fieldName, fieldType, rawValue)
+			return converter.convert_value(raw_entry, field_name, field_type, raw_value)
 		except Exception as ex:
-			self.reportInvalid(rawEntry, fieldName, rawValue, str(ex))
+			self.reportInvalid(raw_entry, field_name, raw_value, str(ex))
 
 	# finds the particular converter
 	@abstractmethod
-	def pickTheValueConverter(self, schema, fieldName, fieldType):
+	def pick_the_value_converter(self, schema, field_name, field_type):
+		""" For given field picks the particular value converter """
+		
 		yield Exception("Implement me!");
 
 ########################################################################

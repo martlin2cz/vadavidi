@@ -1,4 +1,7 @@
-# the datas_util module
+"""
+The datas util module. Apart from the datas module here are more advanced and
+extra classes are specified.
+"""
 
 from typing import List, Mapping, Any
 
@@ -6,44 +9,42 @@ from common.datas import *
 
 
 ########################################################################
-# The utilities class for the datas module
 class DatasUtil:
+	"""
+	The utilities for datas.
+	"""
 	
-	# Creates the schema of given schema, but for the raw table
 	@staticmethod
-	def schemaOfRaw(schema):
-		newFields = dict(map(
-					lambda fn: (fn, "str"),
-					schema.listFieldNames()))
-					
-		return  Schema(newFields)
-	
-	# Creates empty table of given schema
+	def add_to_schema(schema, field_name, field_type):
+		""" Creates new schema with given field appended to it. """
+		
+		fields = {**schema.fields, **{field_name: field_type}}
+		return Schema(fields)
+		
+
 	@staticmethod
-	def emptyTable(schema):
+	def empty_table(schema):
+		""" Creates empty table of given schema """
+		
 		return Table(schema, [])
 
-	# Creates empty table of given schema
 	@staticmethod
-	def joinTables(first, second):
+	def join_tables(first, second):
+		""" Creates empty table of given schema """
+		
 		schema = first.schema
 		entries = (first.list()) + (second.list())
 		
 		return Table(schema, entries)
 
-
-	# adds the given field to given schema
-	@staticmethod
-	def addToSchema(schema, fieldName, fieldType):
-		print("addToSchema")
-		pass #TODO mutable or unmutable?
-
-
 ########################################################################
-# The "mutable" variant of the table. 
-# Someone may call it "Table builder".
-class MutableTable:
-	# maps field names to types
+class RowsMutableTable:
+	"""
+	The rows mutable (allowing to add new rows) table. Someone may call it
+	"Table builder".
+	""" 
+	
+	# the schema of the table
 	schema: Schema
 	# list of Entries
 	entries: List[Entry]
@@ -53,25 +54,78 @@ class MutableTable:
 		self.entries = []
 	
 	def add(self, entry):
-		self.entries.append(entry)
+		""" Adds (appends) given entry """
 		
-	def toTable(self):
+		self.entries.append(entry)
+		return self
+		
+	def to_table(self):
+		""" Converts to table """
+		
 		return Table(self.schema, self.entries)
 
+	def __iadd__(self, entry):
+		return self.add(entry)
+
 	def __str__(self):
-		return "MutableTable " + str(len(self.entries)) + "";
+		return "RowsMutableTable:" + str(len(self.entries)) + "";
+
+	
 ########################################################################
-if __name__== "__main__":
+class ColsMutableTable:
+	"""
+	The columns mutable table (allowing to add new columns). It allows to extend
+	the entries of the table by adding new fields to it.
+	"""
+	
+	# the schema (gets updated)
+	schema: Schema
+	# list of Entries
+	entries: List[Entry]
+
+	def __init__(self, table):
+		self.schema = table.schema
+		self.entries = table.entries
+
+	# TODO make the initial_value to be function entry -> value
+	def add_field(self, field_name, field_type, initial_value=None):
+		""" Adds given field with given initial value """
+		
+		self.schema = DatasUtil.add_to_schema(self.schema, field_name, field_type)
+		
+		self.entries = list(map(lambda e: self.add_to_entry(
+				e, field_name, initial_value), self.entries))
+				
+	def add_to_entry(self, entry, field_name, initial_value):
+		""" Replaces given entry with entry with the new field """
+		
+		values = { **entry.values, **{field_name: initial_value} }
+		return Entry.create(self.schema, values)
+	
+	def to_table(self):
+		""" Converts back to table """
+		
+		return Table(self.schema, self.entries)
+	
+	def __str__(self):
+		return "ColsMutableTable:" + str(schema)
+	
+########################################################################
+if __name__ == "__main__":
 	print("Testing the datas_util module")
 	schema = Schema({"foo": "int", "bar": "str", "baz": "date", "aux": "enum"})
 	print(schema)
-	ofRaw = DatasUtil.schemaOfRaw(schema)
-	print(ofRaw)
-	emptyTable = DatasUtil.emptyTable(schema)
-	print(emptyTable)
 	
-	mt = MutableTable(schema)
-	mt.add(Entry(0, {"foo": 42, "bar": "lorem", "baz": "today", "aux": "MAYBE"}))
-	mt.add(Entry(1, {"foo": 43, "bar": "ipsum", "baz": "yesterday", "aux": "NO"}))
-	mtt = mt.toTable()
-	mtt.printit()
+	rmt = RowsMutableTable(schema)
+	rmt.add(Entry.create_new(schema, 0, "idk", {"foo": 42, "bar": "lorem", "baz": "today", "aux": "MAYBE"}))
+	rmt.add(Entry.create_new(schema, 1, "maybe", {"foo": 43, "bar": "ipsum", "baz": "yesterday", "aux": "NO"}))
+	twr = rmt.to_table()
+	twr.printit()
+	print("=========")
+
+	cmt = ColsMutableTable(twr)
+	cmt.add_field("name", "str", None)
+	cmt.add_field("gender", "enum", "UNSPECIFIED")
+	
+	twc = cmt.to_table()
+	twc.printit()

@@ -1,4 +1,7 @@
-# The base module for parsers
+"""
+The base module for dumpers. The dumper is responsible for dumping the table
+to some "internal file" which allows simple, quick and efficient loading by 
+Raiser. """
 
 from abc import ABC, abstractmethod
 
@@ -7,74 +10,78 @@ from common.utils import FilesNamer
 
 
 ########################################################################
-# The (base) dumper.
+
 class BaseDumper(ABC):
-	
-	# dumps the table, returns the filename
+	""" The (base) dumper. """
 	@abstractmethod
-	def dump(self, datasetName, table):
+	def dump(self, dataset_name, table):
+		""" Dumps the table, returns the file_name """
+		
 		yield Exception("Implement me!");
 
 ########################################################################
-# Handler of already existing file.
 class BaseExistingFileHandler(ABC):
+	""" Handler of already existing (dump) file. """
 	
-	# handles the existing file
 	@abstractmethod
-	def handle(self, datasetName, fileName):
+	def handle(self, dataset_name, file_name):
+		""" handles the existing file """
+		
 		yield Exception("Implement me!");
 
 ########################################################################
-# The file dumper. Dumps to file, the file gets completelly overriden,
-# and specifies what to do with existing file.
 class FileDumper(BaseDumper):
+	""" The file dumper. Dumps to file, the file gets completelly overriden,
+		and specifies what to do with existing file. """
+	
 	# the namer
 	namer = FilesNamer()
 	# the handler of the existing file
-	existingFileHandler: BaseExistingFileHandler
+	existing_file_handler: BaseExistingFileHandler
 
-	# dumps the table, returns the filename
-	def dump(self, datasetName, table):
-		fileName = self.namer.fileName(datasetName)
-		if path.exists(fileName):
-			self.existingFileHandler.handle(datasetName, fileName)
+	def dump(self, dataset_name, table):
+		file_name = self.namer.file_name(dataset_name)
+		if path.exists(file_name):
+			self.existing_file_handler.handle(dataset_name, file_name)
 			
-		self.dumpToFile(datasetName, fileName, table)
-		return fileName
+		self.dump_to_file(dataset_name, file_name, table)
+		return file_name
 	
-	# dumps table into the given file
 	@abstractmethod
-	def dumpToFile(self, datasetName, fileName, table):
+	def dump_to_file(self, dataset_name, file_name, table):
+		""" Dumps table into the given file """
+		
 		yield Exception("Implement me!");
-
 
 ########################################################################
-# Dumper dumping to file separatelly by heading and body
 class CommonFileDumper(FileDumper):	
+	""" Dumper dumping to file separatelly by heading and body. """
 	
-	# dumps table into the given file
-	def dumpToFile(self, datasetName, fileName, table):		
-		with self.openTheFile(datasetName, fileName) as handle:
+	def dump_to_file(self, dataset_name, file_name, table):
+		with self.open_the_file(dataset_name, file_name) as handle:
 			
 			schema = table.schema
-			self.dumpHeader(datasetName, fileName, handle, schema)
+			self.dump_header(dataset_name, file_name, handle, schema)
 			
 			entries = table.list()
-			self.dumpBody(datasetName, fileName, handle, schema, entries)
+			self.dump_body(dataset_name, file_name, handle, schema, entries)
 	
-	# opens the file, returns the handle
 	@abstractmethod	
-	def openTheFile(self, datasetName, fileName):
+	def open_the_file(self, dataset_name, file_name):
+		""" Opens the file somehow, returns some handle to the file """
+		
 		yield Exception("Implement me!");
 		
-	# dumps some header (the schema, i guess)
 	@abstractmethod	
-	def dumpHeader(self, datasetName, fileName, handle, schema):
+	def dump_header(self, dataset_name, file_name, handle, schema):
+		""" Dumps the header (schema) orly prepares for the table """
+		
 		yield Exception("Implement me!");
 	
 	# dumps the body (entries)
 	@abstractmethod	
-	def dumpBody(self, datasetName, fileName, handle, schema, entries):
+	def dump_body(self, dataset_name, file_name, handle, schema, entries):
+		""" Dumps the entries """
 		yield Exception("Implement me!");
 
 ########################################################################	

@@ -1,24 +1,28 @@
-# the various utilities module
+"""
+The various utilities module.
+"""
 from builtins import str
 import re
 
 
 ################################################################################
-# The tool for creating the file names
 class FilesNamer:
+    """ The tool for creating the dataset file names. """
+    
     # the file extension
     extension: str
     
-    # creates the name of the dataset
-    def fileName(self, datasetName):
-        name = self.basenameOfFile(datasetName)
+    def file_name(self, dataset_name):
+        """ Creates the name of the dataset. """
+        
+        name = self.basename_of_file(dataset_name)
         extension = self.extension
         
         return name + "." + extension
     
-    # creates the basename of the file
-    def basenameOfFile(self, datasetName):
-        return re.sub("[^\w/.]", "_", datasetName)
+    def basename_of_file(self, dataset_name):
+        """ Creates the basename of the file. """
+        return re.sub("[^\w/.]", "_", dataset_name)
 
 ################################################################################
 if __name__ == '__main__':
@@ -26,6 +30,6 @@ if __name__ == '__main__':
     namer = FilesNamer()
     namer.extension = "txt"
     
-    print(namer.fileName("foo"))        
-    print(namer.fileName("foo bar"))
-    print(namer.fileName("foo/bar"))
+    print(namer.file_name("foo"))        
+    print(namer.file_name("foo bar"))
+    print(namer.file_name("foo/bar"))

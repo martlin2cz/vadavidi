@@ -1,4 +1,6 @@
-# The base module for parsers
+"""
+The module implementing the parsers.
+"""
 
 import csv
 import re
@@ -8,36 +10,34 @@ from lxml import etree
 
 from common.datas import Entry
 from common.simple_csv import SimpleCSV
-from import_data.base_parsers import LinesSplittingParser, IteratingParser
+from import_data.base_parsers import LinesSplittingParser, IteratingParser,\
+	BaseParser
+from common.datas_util import DatasUtil
 
 
 ########################################################################
 ########################################################################
-# The simple CSV parser.
-# Assumes values on lines separated with one simple separator,
-# no quotes, no multilines, no escaped separators.
-class SimpleCSVParser(IteratingParser):
-	# the fields separator
-	separator = "\t"
-	# the csv module impl
-	csv = SimpleCSV()
-
-	# converts the input file to list of fractions
-	def fracte(self, schema, file_name):
-		return self.csv.listLines(file_name)
-		
-	# converts given fraction to entry
-	def parseFraction(self, ordnum, fraction, schema):
-		return self.csv.lineToEntry(ordnum, schema, line)
+class SimpleCSVParser(BaseParser):
+	"""
+	The simple CSV parser.
+	Assumes values on lines separated with one simple separator, no quotes, 
+	no multilines, no escaped separators. Terminates on any failure.
+	"""
 	
-	# converts given fraction ho user-readable string
-	def stringifyFraction(self, fraction):
-		return str(fraction)
+	# the csv module impl
+	csv = SimpleCSV(False, False)
+
+	def parse(self, schema, file_name):
+		try:
+			return self.csv.load_table(schema, file_name)
+		except Exception as ex:
+			self.report_invalid(-1, "Some", str(ex))
+			return DatasUtil.empty_table(schema)
 
 ########################################################################
 ########################################################################
-# The (proper) CSV files parser. Allows to specify the format.
 class CSVParser(IteratingParser):
+	""" The (proper) CSV files parser. Allows to specify the format. """
 	# the csv input format configuration
 	delimiter = ','
 	doublequote = True
@@ -47,7 +47,6 @@ class CSVParser(IteratingParser):
 	skipinitialspace = True
 	strict = True
 	
-	# converts the input file to list of fractions
 	def fracte(self, schema, file_name):
 		with open(file_name, newline='') as csvfile:
 			reader = csv.reader(csvfile, \
@@ -60,21 +59,23 @@ class CSVParser(IteratingParser):
 								strict = self.strict)
 			return list(reader)
 		
-	# converts given fractionRecord to entry
-	def parseFraction(self, ordnum, fractionRecord, schema):
+	def parse_fraction(self, ordnum, file_name, fraction_record, schema):
+		if len(schema.list_raw()) > len(fraction_record):
+			raise ValueError("Expected {0} fields, but record has only {1}" \
+						.format(len(schema.list_raw()), len(fraction_record)))
+			
 		values = dict(list(map(
 						lambda fn,val: (fn, val),
-						schema.listFieldNames(), fractionRecord)));		
-		return Entry.create(schema, ordnum, values)
+						schema.list_raw(), fraction_record)));		
+		return Entry.create_new(schema, ordnum, file_name, values)
 		
-	# converts given fraction ho user-readable string
-	def stringifyFraction(self, fractionRecord):
-		return self.delimiter.join(fractionRecord)
+	def stringify_fraction(self, fraction_record):
+		return self.delimiter.join(fraction_record)
 	
 ########################################################################
 ########################################################################
-# The Excel "CSV" files parser. Uses the default excel format.
 class ExcelCSVParser(CSVParser):
+	""" The Excel "CSV" files parser. Uses the default excel format. """
 	# the csv input format configuration
 	delimiter = ','
 	doublequote = True
@@ -86,75 +87,74 @@ class ExcelCSVParser(CSVParser):
 		
 ########################################################################
 ########################################################################
-# The parser of XML files iterating over specified elements
 class XMLElementParser(IteratingParser):
+	""" The parser of XML files iterating over specified elements. """
+	
 	# the xpaths for the values lookup
 	# the xpath to list all the elements
-	elemPath: str
+	elem_path: str
 	# the xpaths mapping to particular fieldNames
-	fieldsPaths: Mapping[str, str]
+	fields_paths: Mapping[str, str]
 	
-	# converts the input file to list of fractions
 	def fracte(self, schema, file_name):
 		with open(file_name, newline='') as xmlfile:
 			tree = etree.parse(xmlfile)
-			elemXpath = etree.XPath(self.elemPath)
-			return elemXpath(tree)
+			elem_xpath = etree.XPath(self.elem_path)
+			return elem_xpath(tree)
 
-	# converts given fractionElem to entry
-	def parseFraction(self, ordnum, fractionElem, schema):
-		values = dict(list(map(lambda fn: self.parsePart(fractionElem, fn),
-						schema.listFieldNames())));		
-		return Entry.create(schema, ordnum, values)
+	def parse_fraction(self, ordnum, file_name, fraction_elem, schema):
+		values = dict(list(map(lambda fn: self.parsePart(fraction_elem, fn),
+						schema.list_raw())));		
+		return Entry.create_new(schema, ordnum, file_name, values)
 
-	# parses the given fieldName from given fractionElem
-	def parsePart(self, fractionElem, fieldName):
-		partPath = self.fieldsPaths.get(fieldName) 
-		partXpath = etree.XPath(partPath) 
-		partNodes = partXpath(fractionElem) 
-		if len(partNodes) == 0:
-			raise ValueError("No node with path '" + partPath + "' not found")
+	def parsePart(self, fraction_elem, field_name):
+		part_path = self.fields_paths.get(field_name) 
+		part_xpath = etree.XPath(part_path) 
+		part_nodes = part_xpath(fraction_elem) 
+		if len(part_nodes) == 0:
+			raise ValueError("No node with path '" + part_path + "' found")
 			
-		part = partNodes[0]
-		return (fieldName, part)
+		part = part_nodes[0]
+		return (field_name, part)
 		
-	# converts given fraction ho user-readable string
-	def stringifyFraction(self, fractionElem):
-		return etree.tostring(fractionElem, pretty_print = True)
+	def stringify_fraction(self, fraction_elem):
+		return etree.tostring(fraction_elem, pretty_print = True)
 
 	
 ########################################################################
 ########################################################################
-# The parser general files
 class PatternBasedLinedParser(LinesSplittingParser):
+	""" The parser general (lined) files. How the line may be parsed is 
+	specified by the pattern and mapping of matches to fields. """
+	
 	# the pattern of the line
 	pattern: str
-	# the mapping of the matches indexes to the fieldNames
+	# the mapping of the matches indexes to the field_names
 	matchers: Mapping[str, int]
 	# just the compiled pattern
-	patternRe: None
+	_pattern_re: None
 	
 	# runs the parsing itself
 	def parse(self, schema, file_name):
-		self.patternRe = re.compile(self.pattern)
+		self._pattern_re = re.compile(self.pattern)
 		
 		return super().parse(schema, file_name)
 	
 	# converts given line to entry
-	def parseLine(self, ordnum, line, schema):
-		matcher = self.patternRe.findall(line)
+	def parse_line(self, ordnum, file_name, line, schema):
+		matcher = self._pattern_re.findall(line)
 		if len(matcher) == 0:
-			raise ValueError("Line not matching the pattern")
+			raise ValueError("Line " + ordnum + " not matching the pattern")
 		
 		matches = matcher[0]
 		if len(matches) < len(self.matchers.keys()):
 			raise ValueError("Found only " + len(matches) + " match groups")
 		
 		values = dict(map(
-				lambda fieldName: (fieldName, matches[self.matchers[fieldName]]), 
-				schema.listFieldNames()))
+				lambda fn: (fn, matches[self.matchers[fn]]), 
+				schema.list_raw()))
 		
-		return Entry.create(schema, ordnum, values)	
+		return Entry.create_new(schema, ordnum, file_name, values)	
 
 
 ########################################################################

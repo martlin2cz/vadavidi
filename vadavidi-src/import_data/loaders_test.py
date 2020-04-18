@@ -1,82 +1,84 @@
-# the test module for the loaders
-
+"""
+The test module for the loaders
+"""
 import unittest
 
-from import_data.converters_impls import DefaultValuesConvertingConverter
 from common.datas import Schema
+from common.test_utils import TestUtils
+from import_data.converters_impls import DefaultValuesConvertingConverter
 from import_data.loaders_impls import FileNameMatcher, FirstLineMatcher, \
 	SingleFileLoader, MultiFilesLoader, AllFilesMatchingMatcher
 from import_data.parsers_impls import SimpleCSVParser, XMLElementParser
 
 
 ########################################################################
-# tests the parsers
 class TestLoaders(unittest.TestCase):
 	schema = Schema({"first": "str", "number": "int", "second": "str"})
 	
 	def test_FileNameMatcher(self):
 		matcher = FileNameMatcher()
-		matcher.patternOfName = "(.+)\.csv"
-		self.runMatcher(matcher, "testdata/firts.csv")
-		self.runMatcher(matcher, "testdata/fourth.xml")
+		matcher.pattern_of_name = "(.+)\.csv"
+		self.run_matcher(matcher, TestUtils.tfn("firts.csv"))
+		self.run_matcher(matcher, TestUtils.tfn("fourth.xml"))
 	
 		matcher = FileNameMatcher()
-		matcher.patternOfName = "fi((rst)|(fth)).(.+)"
-		self.runMatcher(matcher, "testdata/first.csv")
-		self.runMatcher(matcher, "testdata/second.csv")
+		matcher.pattern_of_name = "fi((rst)|(fth)).(.+)"
+		self.run_matcher(matcher, TestUtils.tfn("first.csv"))
+		self.run_matcher(matcher, TestUtils.tfn("second.csv"))
 	
 	def test_FirstLineMatcher(self):
 		matcher = FirstLineMatcher()
-		matcher.patternOfLine = "([^\t]+)\t([^\t]+)\t([^\t]+)"
-		self.runMatcher(matcher, "testdata/first.csv")
-		self.runMatcher(matcher, "testdata/second.csv")
+		matcher.pattern_of_line = "([^\t]+)\t([^\t]+)\t([^\t]+)"
+		self.run_matcher(matcher, TestUtils.tfn("first.csv"))
+		self.run_matcher(matcher, TestUtils.tfn("second.csv"))
 	
 		matcher = FirstLineMatcher()
-		matcher.patternOfLine = "\<\?xml"
-		self.runMatcher(matcher, "testdata/first.csv")
-		self.runMatcher(matcher, "testdata/fourth.xml")
+		matcher.pattern_of_line = "\<\?xml"
+		self.run_matcher(matcher, TestUtils.tfn("first.csv"))
+		self.run_matcher(matcher, TestUtils.tfn("fourth.xml"))
 	
 	def test_SingleFilesLoader(self):
 		loader = SingleFileLoader()
-		loader.file_name = "testdata/first.csv"
+		loader.file_name = TestUtils.tfn("first.csv")
 		loader.parser = SimpleCSVParser()
 		loader.converter = DefaultValuesConvertingConverter()
 		
-		self.runLoader(loader)
+		self.run_loader(loader)
 	
 	def test_MultiFilesLoader(self):
 		loader = MultiFilesLoader()
-		loader.files_names = ["testdata/first.csv", "testdata/fourth.xml"]
+		loader.files_names = [TestUtils.tfn("first.csv"), TestUtils.tfn("fourth.xml")]
 		
-		csvParser = SimpleCSVParser()
+		csv_parser = SimpleCSVParser()
 		
-		xmlParser = XMLElementParser()
-		xmlParser.elemPath = "/records/record";
-		xmlParser.fieldsPaths = {"first": "@first", "number": "@number", "second": "@second"}
+		xml_parser = XMLElementParser()
+		xml_parser.elem_path = "/records/record";
+		xml_parser.fields_paths = {"first": "@first", "number": "@number", "second": "@second"}
 		
 		converter = DefaultValuesConvertingConverter()
 		
-		csvMatcher = FileNameMatcher()
-		csvMatcher.patternOfName = "(.+)\.csv"
+		csv_matcher = FileNameMatcher()
+		csv_matcher.pattern_of_name = "(.+)\.csv"
 		
-		xmlMatcher = FileNameMatcher()
-		xmlMatcher.patternOfName = "(.+)\.xml"
+		xml_matcher = FileNameMatcher()
+		xml_matcher.pattern_of_name = "(.+)\.xml"
 		
-		allMatcher = AllFilesMatchingMatcher()
-		loader.parsers = { csvMatcher: csvParser, xmlMatcher: xmlParser }
-		loader.converters = { allMatcher: converter }
+		all_matcher = AllFilesMatchingMatcher()
+		loader.parsers = { csv_matcher: csv_parser, xml_matcher: xml_parser }
+		loader.converters = { all_matcher: converter }
 		
-		self.runLoader(loader)
+		self.run_loader(loader)
 		
-		
-	def runMatcher(self, matcher, file_name):
+	########################################################################
+
+	def run_matcher(self, matcher, file_name):
 		print("=======================================================")
 		print("RUNNING MATCHER: " + str(matcher));
 		
 		match = matcher.matches(file_name)
 		print("{0} \t -> {1}".format(file_name, match))
 		
-	def runLoader(self, loader):
+	def run_loader(self, loader):
 		print("=======================================================")
 		print("RUNNING LOADER: " + str(loader));
 		

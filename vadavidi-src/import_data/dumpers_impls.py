@@ -10,53 +10,45 @@ from import_data.base_dumpers import CommonFileDumper, BaseExistingFileHandler, 
 
 
 ########################################################################
-########################################################################
-# Just the simple testing dumper dumping to primitive CSV
 class SimpleCSVDumper(FileDumper):
-	csv = SimpleCSV()
+	""" Just the simple testing dumper dumping to primitive CSV. """
+
+	# the CSV impl	
+	csv = SimpleCSV(True, True)
 	
-	# constructor
 	def __init__(self):
 		self.namer.extension = 'csv'
 
-
-	def dumpToFile(self, datasetName, fileName, table):
-		schema = table.schema
-		lines = [self.csv.schemaToLine(schema)] \
-			+ list(map(lambda e: self.csv.entryToLine(schema, e),
-					table.list()))
-			
-		self.csv.saveLines(lines, fileName)
+	def dump_to_file(self, dataset_name, file_name, table):
+		self.csv.save_table(table, file_name)
 		
 ########################################################################
-# The dumper dumping to the sqlite database
 class SQLiteDumper(CommonFileDumper):
-
-	# constructor
+	""" The dumper dumping to the sqlite database. """
+	
 	def __init__(self):
 		self.namer.extension = 'db'
 	
-	# opens the file, returns the handle
-	def openTheFile(self, datasetName, fileName):
-		return sqlite3.connect(fileName)
+	def open_the_file(self, dataset_name, file_name):
+		return sqlite3.connect(file_name)
 		
-	# dumps some header (the schema, i guess)
-	def dumpHeader(self, datasetName, fileName, conHandle, schema):
-		self.createTable(conHandle, datasetName, schema)
+	def dump_header(self, dataset_name, file_name, con_handle, schema):
+		self.create_table(con_handle, dataset_name, schema)
 		
 	# dumps the body (entries)
-	def dumpBody(self, datasetName, fileName, conHandle, schema, entries):
+	def dump_body(self, dataset_name, file_name, con_handle, schema, entries):
 		for entry in entries:
-			self.insertEntry(conHandle, datasetName, schema, entry)
+			self.insert_entry(con_handle, dataset_name, schema, entry)
 	
 	# creates the table
-	def createTable(self, conn, datasetName, schema):
-		tableName = self.tableName(datasetName)
-		fieldsDecl = ", ".join(list(map(
-			lambda fn: self.columnName(fn) + " " + self.sqlTypeOfField(schema, fn),
-			schema.listFieldNames())))
+	def create_table(self, conn, dataset_name, schema):
+		table_name = self.table_name(dataset_name)
+		fields_decl = ", ".join(list(map(
+			lambda fn: self.column_name(fn) + " " + self.sql_type_of_field(schema, fn),
+			schema)))
 		
-		sql = "CREATE TABLE {0} (ordnum INT PRIMARY KEY, {1})".format(tableName, fieldsDecl)
+		sql = "CREATE TABLE {0} (ordnum INT PRIMARY KEY, {1})" \
+				.format(table_name, fields_decl)
 		#print(sql)
 		
 		c = conn.cursor()
@@ -64,70 +56,67 @@ class SQLiteDumper(CommonFileDumper):
 		conn.commit()
 	
 	# inserts the entry into the table
-	def insertEntry(self, conn, datasetName, schema, entry):
+	def insert_entry(self, conn, dataset_name, schema, entry):
 		
-		tableName = self.tableName(datasetName)
-		fieldsDecl = ", ".join(list(map(
-			lambda fn: self.columnName(fn),
-			schema.listFieldNames())))
+		table_name = self.table_name(dataset_name)
+		fields_decl = ", ".join(list(map(
+			lambda fn: self.column_name(fn),
+			schema)))
 		
-		ordnum = entry.ordernum()
-		valuesDecl = ", ".join(list(map(
+		values_decl = ", ".join(list(map(
 			lambda fn: "?",
-			schema.listFieldNames())))
+			schema)))
 		
-		sql = "INSERT INTO {0} (ordnum, {1}) VALUES (?, {3})" \
-				.format(tableName, fieldsDecl, ordnum, valuesDecl)
+		sql = "INSERT INTO {0} ({1}) VALUES ({2})" \
+				.format(table_name, fields_decl, values_decl)
 		#print(sql)
 		
-		values = [ordnum] + list(map(
+		values = list(map(
 			lambda fn: entry.value(fn),
-			schema.listFieldNames()))
+			schema))
 		
 		c = conn.cursor()
 		c.execute(sql, values)
 		conn.commit()
 		
 	# creates name of the table
-	def tableName(self, datasetName):
-		return re.sub("[\W]", "_", datasetName)
+	def table_name(self, dataset_name):
+		return re.sub("[\W]", "_", dataset_name)
 	
 	# creates name of column	
-	def columnName(self, fieldName):
-		return re.sub("[\W]", "_", fieldName)
+	def column_name(self, field_name):
+		return re.sub("[\W]", "_", field_name)
 		
 	# obtains sql type of the field
-	def sqlTypeOfField(self, schema, fieldName):
-		fieldType = schema.typeOf(fieldName)
+	def sql_type_of_field(self, schema, field_name):
+		field_type = schema[field_name]
 		
-		if fieldType in ("int", "integer"):
+		if field_type in ("int", "integer"):
 			return "INT"
 			
-		if fieldType in ("decimal", "float"):
+		if field_type in ("decimal", "float"):
 			return "REAL"
 		
-		if fieldType in ("bool", "boolean"):
+		if field_type in ("bool", "boolean"):
 			return "BOOL"
 			
 		return "TEXT"
 
 ########################################################################
 ########################################################################
-# The handler which simply the existing files deletes.
 class DeletingHandler(BaseExistingFileHandler):
+	""" The handler which simply the existing files deletes. """
 	
-	# handles the existing file
-	def handle(self, datasetName, fileName):
-		os.remove(fileName)
+	def handle(self, dataset_name, file_name):
+		os.remove(file_name)
 
 ########################################################################
-# The handler which simply moves the simple backup file.
 class SimplyBackupingHandler(BaseExistingFileHandler):
+	""" The handler which simply moves the simple backup file. """
 	
-	# handles the existing file
-	def handle(self, datasetName, fileName):
-		backupFileName = fileName + "_backup"
-		os.rename(fileName, backupFileName)
+	def handle(self, dataset_name, file_name):
+		backup_file_name = file_name + "_backup"
+		os.rename(file_name, backup_file_name)
 	
 ########################################################################
 if __name__== "__main__":

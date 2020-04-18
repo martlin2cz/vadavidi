@@ -1,15 +1,19 @@
-# The base loaders module
+"""
+The base loaders module. The loader is component responsible for loading the
+table from the one or more files or any other sources.
+"""
 
 from abc import ABC, abstractmethod
 
 
 ########################################################################
-# The common loader loader
 class BaseLoader(ABC):
+	""" The (base) loader. """
 	
-	# runs the import itself
 	@abstractmethod
 	def run(self, schema):
+		""" Runs the load itself """
+		
 		yield Exception("Implement me!");	
 
 ########################################################################
