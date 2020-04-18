@@ -23,7 +23,7 @@ class DefaultQuerier(BaseQuerier):
     optimalisations.
     """
     
-    # the xlang impl
+    # the elang impl
     renderer: BaseExpressionNativeRenderer
     
     def query(self, table, query):

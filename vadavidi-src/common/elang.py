@@ -1,5 +1,5 @@
 """
-The xlang expressions parser.
+The elang expressions parser.
 """
 
 from builtins import str
@@ -15,22 +15,22 @@ from outport_data.queriers_impls import DefaultQuerier
 
 ################################################################################
 @dataclass
-class XLangExpression(EntryExpression):
+class ELangExpression(EntryExpression):
     """ The simple dataclass holding the list of items, plain strs or
-     XLangFieldReferences. """
+     elangFieldReferences. """
      
     # the items itself
     items: List[Any]
     
 
     def __str__(self):
-        return "XLang[" + " ".join(map(str, self.items)) + "]"
+        return "elang[" + " ".join(map(str, self.items)) + "]"
 
 
 ################################################################################
 @dataclass
-class XLangFieldReference:
-    """ Just one item of the XLangExpression, which references the field """
+class ELangFieldReference:
+    """ Just one item of the elangExpression, which references the field """
     
     field_name: str
 
@@ -38,12 +38,12 @@ class XLangFieldReference:
         return "Field[" + self.field_name + "]"
 
 ################################################################################
-class XLangNativeRenderer(BaseExpressionNativeRenderer):
-    """ The expression native renderer for the XLang expressions """
+class ELangNativeRenderer(BaseExpressionNativeRenderer):
+    """ The expression native renderer for the elang expressions """
     
     def to_native(self, expression, querier, entry_identifier):
-        if not isinstance(expression, XLangExpression):
-            raise ValueError("Not XLang expression")
+        if not isinstance(expression, ELangExpression):
+            raise ValueError("Not elang expression")
         
         if isinstance(querier, DefaultQuerier):
             return self.to_python_native(expression, entry_identifier)
@@ -59,7 +59,7 @@ class XLangNativeRenderer(BaseExpressionNativeRenderer):
         
         return " ".join(list(map(
             lambda i: ("{0}['{1}']".format(entry_identifier, i.field_name) \
-                        if isinstance(i, XLangFieldReference) else i),
+                        if isinstance(i, ELangFieldReference) else i),
             expression.items)))
     
     def to_sqllite_native(self, expression, entry_identifier):
@@ -69,8 +69,8 @@ class XLangNativeRenderer(BaseExpressionNativeRenderer):
             
         
 ################################################################################    
-class XLangParser:
-    """ The parser of the xlang expression strings. """
+class ELangParser:
+    """ The parser of the elang expression strings. """
     
     def parse(self, schema, expr):
         """ Parses the expression """
@@ -84,10 +84,10 @@ class XLangParser:
             else:
                 result.append(token)
         
-        return XLangExpression(result)
+        return ELangExpression(result)
 
     def parse_token(self, schema, token):
-        """ Parses one single token (with xlang field) of the expression """
+        """ Parses one single token (with elang field) of the expression """
         
         without_euro = token[1:]
         
@@ -95,17 +95,17 @@ class XLangParser:
             raise ValueError("No such field " + without_euro) 
         
         field_name = without_euro
-        return XLangFieldReference(field_name)
+        return ELangFieldReference(field_name)
 
 
 ################################################################################    
 if __name__ == '__main__':
-    parser = XLangParser()
+    parser = ELangParser()
     schema = Schema({"karel": "string"})
     
     xle = parser.parse(schema, "abc -  €karel * jitka + 45")
     print(xle)
     
-    renderer = XLangNativeRenderer()
+    renderer = ELangNativeRenderer()
     print(renderer.to_python_native(xle, "eee"))
     print(renderer.to_sqllite_native(xle, "eee"))

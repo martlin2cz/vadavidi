@@ -5,8 +5,8 @@ import unittest
 
 from common.datas import Schema, Entry
 from common.datas_util import RowsMutableTable
-from common.xlang import XLangNativeRenderer, XLangExpression, \
-    XLangFieldReference
+from common.elang import ELangNativeRenderer, ELangExpression, \
+    ELangFieldReference
 from outport_data.base_queriers import AggregatingExpression
 from outport_data.base_queriers import Query
 from outport_data.queriers_impls import DefaultQuerier
@@ -19,7 +19,7 @@ class QueriersTest(unittest.TestCase):
 
     def test_DefaultQuerier(self):
         querier = DefaultQuerier()
-        querier.renderer = XLangNativeRenderer()
+        querier.renderer = ELangNativeRenderer()
         
         table = self.create_table()
         
@@ -30,9 +30,9 @@ class QueriersTest(unittest.TestCase):
         query = Query(x_axis = "foo", \
             y_axis_specifiers = { \
                 "maxs of bar": AggregatingExpression("max", "int", \
-                    XLangExpression([ XLangFieldReference("bar") ])), \
+                    ELangExpression([ ELangFieldReference("bar") ])), \
                 "count of baz": AggregatingExpression("count", "int", \
-                    XLangExpression([ XLangFieldReference("baz") ])) })
+                    ELangExpression([ ELangFieldReference("baz") ])) })
         
         print(query)
         
