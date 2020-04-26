@@ -8,13 +8,14 @@ from common.datas import Schema, Entry, ID, Table
 from outport_data.base_displayers import StyleBuilder
 from outport_data.simple_displayer import SimpleDisplayer, LineChartSeriesStyle, \
     BarChartSeriesStyle, ScatterChartSeriesStyle, PieChartSeriesStyle
+import time
 
 
 ###############################################################################
 class TestDisplayers(unittest.TestCase):
     schema = Schema({"time":"int", "speed":"decimal"})
 
-    def test_Line(self):
+    def _test_Line(self):
         displayer = SimpleDisplayer()
         styles = {
             ID: StyleBuilder(LineChartSeriesStyle).sets(color="y", line_width=4).build(),
@@ -24,7 +25,7 @@ class TestDisplayers(unittest.TestCase):
         
         self.run_displayer(displayer, styles)
 
-    def test_Bar(self):
+    def _test_Bar(self):
         displayer = SimpleDisplayer()
         styles = {
             ID: StyleBuilder(BarChartSeriesStyle).sets(color="b", bar_width=1).build(),
@@ -34,7 +35,7 @@ class TestDisplayers(unittest.TestCase):
         
         self.run_displayer(displayer, styles)
 
-    def test_Scatter(self):
+    def _test_Scatter(self):
         displayer = SimpleDisplayer()
         styles = {
             ID: StyleBuilder(ScatterChartSeriesStyle).sets(color="r").build(),
@@ -44,7 +45,7 @@ class TestDisplayers(unittest.TestCase):
         
         self.run_displayer(displayer, styles)
         
-    def test_Pie(self):
+    def _test_Pie(self):
         displayer = SimpleDisplayer()
         styles = {
             "age": StyleBuilder(PieChartSeriesStyle).sets().build(),
@@ -53,6 +54,23 @@ class TestDisplayers(unittest.TestCase):
             }
         
         self.run_displayer(displayer, styles)
+        
+        
+    def test_rerun_one_test(self):
+        displayer = SimpleDisplayer()
+        
+        styles = {
+            "speed": StyleBuilder(LineChartSeriesStyle).sets(marker_size = 10, marker_style = "*").build(),
+            }
+        
+        self.run_displayer(displayer, styles)
+
+        styles = {
+            "age": StyleBuilder(LineChartSeriesStyle).build()
+            }
+        
+        self.run_displayer(displayer, styles)
+        
 
 ###############################################################################
     def create_table(self):

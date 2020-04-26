@@ -3,7 +3,6 @@ The simple, testing displayer module
 """
 
 from builtins import str
-import numpy as np
 from dataclasses import dataclass, replace
 import math
 from time import sleep
@@ -14,7 +13,8 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from common.datas import Entry, Table, Schema, ID
 from common.datas_util import DatasUtil
 import matplotlib.pyplot as plt
-from outport_data.base_displayers import BaseSeriesStyle
+import numpy as np
+from outport_data.base_displayers import BaseSeriesStyle, BaseDisplayer
 
 
 ################################################################################
@@ -53,11 +53,13 @@ class PieChartSeriesStyle(BaseSeriesStyle):
 ################################################################################
 
 
-class SimpleDisplayer(object):
-    """ The simple displayer. Displays the table of two columns in simple 
+class SimpleDisplayer(BaseDisplayer):
+    """ The simple displayer. Displays the table in simple 
     matplot window. """
         
     def show_line(self, x_values, name, values, style):
+        """ Shows line chart """
+        
         plt.plot(x_values, values, \
                  label = name, \
                  color = style.color, \
@@ -67,6 +69,7 @@ class SimpleDisplayer(object):
                  markersize = style.marker_size)
         
     def relativise(self, current_style, styles, x_step):
+        """ Computes the left and with relative, and absolutes to x_step """
         total_width = sum(map(lambda x: x.bar_width + x.space_after, styles.values()))
         ratio = (x_step / total_width)
         
@@ -83,6 +86,8 @@ class SimpleDisplayer(object):
         return None
         
     def show_bar(self, x_values, name, values, style, styles):
+        """ Shows the bar chart """
+        
         x_step = abs(x_values[0] - x_values[1])
         (x_offset, relative_width) = self.relativise(style, styles, x_step)
         x_values_shiffted = list(map(lambda x: (x + x_offset), x_values))
@@ -94,6 +99,8 @@ class SimpleDisplayer(object):
              hatch = style.hatch_style)     
         
     def show_scatter(self, table, x_values, name, values, style):
+        """ Shows the scatter chart """
+        
         if style.marker_sizes_field:
             sizes_values = DatasUtil.column(table, style.marker_sizes_field)
         else:
@@ -108,6 +115,8 @@ class SimpleDisplayer(object):
                     data = datas)
         
     def show_pie(self, x_values, name, values, style):
+        """ Shows the pie chart """
+        
         colors = None
         if style.first_color:
             cmap = LinearSegmentedColormap.from_list("REV " + name, \
@@ -124,7 +133,6 @@ class SimpleDisplayer(object):
                 explode = explodes)
     
     def show(self, dataset_name, result, x_axis_name, series_names, styles):
-        """ Shows the given dataset """
         
         x_axis_values = DatasUtil.column(result, x_axis_name)
         

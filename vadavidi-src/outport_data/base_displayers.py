@@ -3,8 +3,9 @@ The base module of the displayers. The displayers are responsible for showing
 the resulting table to the user as a chart. Via the GUI or not (rendered to 
 file).
 """
-from dataclasses import dataclass
+from abc import abstractmethod, ABC
 from builtins import str
+from dataclasses import dataclass
 
 
 ################################################################################
@@ -47,4 +48,11 @@ class StyleBuilder:
     
 
 ################################################################################
-#TODO the base displayer class
+class BaseDisplayer(ABC):
+    """ The base displayer. Resposinble for displaying, showing chart of the
+    table. Typically, the one field of the table is choosen as a x-value, others
+    are shown as the series. """
+    
+    @abstractmethod
+    def show(self, dataset_name, result, x_axis_name, series_names, styles):
+        """ Shows the specified series of the given result table. """
