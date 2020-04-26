@@ -2,49 +2,54 @@
 The simple, testing displayer module
 """
 
+from builtins import str
+import numpy as np
+from dataclasses import dataclass, replace
 import math
 from time import sleep
+
+from matplotlib import cm
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 from common.datas import Entry, Table, Schema, ID
 from common.datas_util import DatasUtil
 import matplotlib.pyplot as plt
-from outport_data.base_displayers import SeriesStyle, LINE, SCATTER, BAR, PIE
+from outport_data.base_displayers import BaseSeriesStyle
 
 
 ################################################################################
-class StylesBuilder:
-    # the style built
-    style: SeriesStyle
+@dataclass(init=False)
+class LineChartSeriesStyle(BaseSeriesStyle):
+    color: str = None
+    line_width: float = None
+    line_style: str = "-"
+    marker_size: float = None
+    marker_style: str = None
+
+################################################################################
+@dataclass(init=False)
+class BarChartSeriesStyle(BaseSeriesStyle):
+    color: str = None
+    bar_width: float = 2
+    hatch_style: str = None
+    space_after: float = 0.5
+
+################################################################################
+@dataclass(init=False)
+class ScatterChartSeriesStyle(BaseSeriesStyle):
+    color: str = None
+    marker_base_size: float = None
+    marker_sizes_field: str = None
+    marker_style: str = None
     
-    def __init__(self):
-        self.style = SeriesStyle(LINE, None, 1, "-", "o")
-    
-    def with_kind(self, kind):
-        self.style.kind = kind
-        return self
-    
-    def with_color(self, color):
-        self.style.color = color
-        return self
-    
-    def with_width(self, width):
-        self.style.width = width
-        return self
-    
-    def with_style(self, style):
-        self.style.style = style
-        return self
-    
-    def with_markers(self, markers):
-        self.style.markers = markers
-        return self
-    
-    def build(self):
-        return self.style
-    
-    
-    #TODO
-    
+################################################################################
+@dataclass(init=False)
+class PieChartSeriesStyle(BaseSeriesStyle):
+    first_color: str = None
+    last_color: str = "black"
+    radius: float = 1.0
+    explode: float = 0.0
+
 ################################################################################
 
 
@@ -52,8 +57,71 @@ class SimpleDisplayer(object):
     """ The simple displayer. Displays the table of two columns in simple 
     matplot window. """
         
-
- 
+    def show_line(self, x_values, name, values, style):
+        plt.plot(x_values, values, \
+                 label = name, \
+                 color = style.color, \
+                 linewidth = style.line_width, \
+                 linestyle = style.line_style, \
+                 marker = style.marker_style, \
+                 markersize = style.marker_size)
+        
+    def relativise(self, current_style, styles, x_step):
+        total_width = sum(map(lambda x: x.bar_width + x.space_after, styles.values()))
+        ratio = (x_step / total_width)
+        
+        subsum = 0.0
+        for style in styles.values():
+            if style is current_style:
+                
+                left = subsum * ratio 
+                width = current_style.bar_width * ratio
+                return (left, width)
+            
+            subsum += (style.bar_width + style.space_after)
+            
+        return None
+        
+    def show_bar(self, x_values, name, values, style, styles):
+        x_step = abs(x_values[0] - x_values[1])
+        (x_offset, relative_width) = self.relativise(style, styles, x_step)
+        x_values_shiffted = list(map(lambda x: (x + x_offset), x_values))
+        
+        plt.bar(x_values_shiffted, values, relative_width, \
+             label = name, \
+             color = style.color, \
+             fill = True, \
+             hatch = style.hatch_style)     
+        
+    def show_scatter(self, table, x_values, name, values, style):
+        if style.marker_sizes_field:
+            sizes_values = DatasUtil.column(table, style.marker_sizes_field)
+        else:
+            sizes_values = style.marker_base_size
+            
+        datas = {"sizes": sizes_values }
+        plt.scatter(x_values, values, \
+                    label = name, \
+                    color = style.color, \
+                    marker = style.marker_style, 
+                    s = "sizes", \
+                    data = datas)
+        
+    def show_pie(self, x_values, name, values, style):
+        colors = None
+        if style.first_color:
+            cmap = LinearSegmentedColormap.from_list("REV " + name, \
+                    [style.first_color, style.last_color]) \
+                    .reversed(name)
+            #suma = sum(values)
+            colors = cmap(np.linspace(0,1, num = len(values)))
+            
+        explodes = list(map(lambda y: style.explode, values))
+        plt.pie(values, \
+                #labels = values, \
+                colors = colors, \
+                radius = style.radius, \
+                explode = explodes)
     
     def show(self, dataset_name, result, x_axis_name, series_names, styles):
         """ Shows the given dataset """
@@ -64,90 +132,40 @@ class SimpleDisplayer(object):
             series_values = DatasUtil.column(result, series_name)
             
             series_style = styles[series_name]
-            ss = series_style
             
-            if series_style.kind == LINE:
-                plt.plot(x_axis_values, series_values, label = series_name, \
-                         color = ss.color, linewidth = ss.width, \
-                         linestyle = ss.style, marker = ss.markers)
-            elif series_style.kind == BAR:
-                x_axis_starts = list(map(lambda x: x + i * ss.width, x_axis_values))
-                plt.bar(x_axis_starts, series_values, ss.width, \
-                         label = series_name, color = ss.color, \
-                         fill = True, hatch = ss.markers)        
-            elif series_style.kind == SCATTER:
-                datas = {"sizes": series_values }
-                plt.scatter(x_axis_values, series_values, label = series_name, \
-                         color = ss.color, s = "sizes", marker = ss.markers, data = datas)
-                
-            elif series_style.kind == PIE:
-                labels = [series_name] + [""] * (len(series_values) - 1)
-                plt.pie(series_values, radius = ss.width, labels = labels)
+            if isinstance(series_style, LineChartSeriesStyle):
+                self.show_line(x_axis_values, series_name, series_values, series_style)
 
+            elif isinstance(series_style, BarChartSeriesStyle):
+                self.show_bar(x_axis_values, series_name, series_values, series_style, styles)
+                
+            elif isinstance(series_style, ScatterChartSeriesStyle):
+                self.show_scatter(result, x_axis_values, series_name, series_values, series_style)
             
+            elif isinstance(series_style, PieChartSeriesStyle):
+                self.show_pie(x_axis_values, series_name, series_values, series_style)
+                    
             else:
                 raise ValueError("Unsupported kind")
             
             plt.title(dataset_name)
-            if series_style.kind != PIE:
+
+            if not isinstance(series_style, PieChartSeriesStyle):
                 plt.xlabel(x_axis_name)
                 plt.ylabel(series_name)
-
         
         #plt.tight_layout()
-        plt.legend()
+        if not isinstance(series_style, PieChartSeriesStyle):
+            plt.legend()
+            
         plt.show()
        
-    
-     
+      
             
 ################################################################################
 if __name__ == '__main__':
-    print("Testing the simple displayer")
+    print("See the displayers_test module")
     
-    disp = SimpleDisplayer()
-    schema = Schema({"time":"int", "speed":"decimal"})
-    entries = list((Entry.create_new(schema, i, "cmptd", \
-            { "time": (i ** 1), "speed": math.e**i / 10, "age": math.cos(i) } )) \
-                   for i in range(1, 7))
-    
-    table = Table(schema, entries)
-    table.printit()
-    
-    series_names = [ID, "speed", "age"]
 
-## various chart types:
-#    styles = {ID: StylesBuilder().with_kind(LINE).build(), \
-#              "speed": StylesBuilder().with_kind(BAR).build(), \
-#              "age": StylesBuilder().with_kind(SCATTER).build() }
-
-## various line chart styles:
-#    styles = {ID: StylesBuilder().with_markers("x").build(), \
-#              "speed": StylesBuilder().with_style("--").build(), \
-#              "age": StylesBuilder().with_width(2).build() }
-
-## various colors:
-#    styles = {ID: StylesBuilder().with_color("y").build(), \
-#              "speed": StylesBuilder().with_color("red").build(), \
-#              "age": StylesBuilder().with_color("#906090").build() }
-
-## various bar charts: 
-#    styles = {ID: StylesBuilder().with_kind(BAR).with_width(4).build(), \
-#              "speed": StylesBuilder().with_kind(BAR).with_color("red").build(), \
-#              "age": StylesBuilder().with_kind(BAR).with_markers("/").build() }
-
-## various scatter charts: 
-#    styles = {ID: StylesBuilder().with_kind(SCATTER).with_width(14).build(), \
-#              "speed": StylesBuilder().with_kind(SCATTER).with_color("red").build(), \
-#              "age": StylesBuilder().with_kind(SCATTER).with_markers("*").build() }
-   
-    styles = {ID: StylesBuilder().with_kind(PIE).with_width(1.4).build(), \
-              "speed": StylesBuilder().with_kind(PIE).with_color("red").build(), \
-              "age": StylesBuilder().with_kind(PIE).with_width(0.5).build() }
-   
-        
-    disp.show("Speeding up", table, "time", series_names, styles)
-    
-    sleep(20)
     
     
