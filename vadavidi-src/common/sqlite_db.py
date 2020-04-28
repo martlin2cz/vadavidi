@@ -1,13 +1,17 @@
 """
 The module implementing the SQLLite database (in fact just only one table) "DAO"
 """
-from builtins import str
+from builtins import str, staticmethod
 import os
 from sqlite3 import Connection
 import sqlite3
 
 from common.datas import ID, Entry, Schema, SOURCE
 from common.datas_util import RowsMutableTable
+from typing import Mapping
+import atexit
+from common.utils import FilesNamer
+import re
 
 
 ################################################################################
@@ -44,6 +48,10 @@ class SQLLite:
         sql = self.create_create_table_sql(schema)
         self.execute(sql)
 
+    def delete_table(self):
+        sql = self.create_drop_table_sql()
+        self.execute(sql)
+
     def insert_entry(self, schema, entry):
         sql = self.create_insert_sql(schema)
         values = self.create_entry_values(schema, entry)
@@ -78,6 +86,9 @@ class SQLLite:
     
         return "CREATE TABLE {0} ({1})" \
                 .format(self.table_name, fields_decl)
+
+    def create_drop_table_sql(self):
+        return "DROP TABLE {0}".format(self.table_name)
 
     def create_insert_sql(self, schema):
         fields_decl = ", ".join(list(map(
@@ -155,6 +166,10 @@ class SQLLite:
 
 ################################################################################
     
+    @staticmethod
+    def table_name(dataset_name):
+        return re.sub("[^\w]", "_", dataset_name)
+    
     def column_name(self, field_name):
         #return "\'" + field_name + "\'" 
         return field_name
@@ -225,14 +240,63 @@ class SQLLite:
         return result
     
 ################################################################################    
-    def __enter__(self):
-        self.connect()
-        return self
+#    def __enter__(self):
+#        self.connect()
+#        return self
         
 #    def __exit__(self, exc_type, exc_value, traceback):
 #        self.disconnect()
 #        return self
+
+################################################################################
+class SQLLitePool:
+    """ The manager of the SQLLite instances. Keeps the references to the
+    existing instances to allow effective work with the sqllite database(s). """
+    
+    # the mapping dataset_name -> SQLLite instance
+    sqllites: Mapping[str, SQLLite] = {}
+    # the namer of the fields
+    namer: FilesNamer = FilesNamer("db")
+    
+    def __init__(self):
+        atexit.register(self.disconnect_them)
+    
+    
+    def create_and_init(self, dataset_name):
+        """ Creates and initializes instance of SQLLite for given dataset """
         
+        file_name = self.namer.file_name(dataset_name)
+        table_name = SQLLite.table_name(dataset_name)
+        
+        sqllite = SQLLite(file_name, table_name)
+        sqllite.connect()
+        
+        return sqllite
+        
+    
+    def get(self, dataset_name):
+        """ Obtains (returns existing or creates new) instance of SQLLite for
+        given dataset """
+        
+        if dataset_name in self.sqllites.keys():
+            return self.sqllites[dataset_name]
+        else:
+            sqllite = self.create_and_init(dataset_name)
+            
+            self.sqllites[dataset_name] = sqllite
+            return sqllite
+            
+    def disconnect_them(self):
+        """ Disconects all the registered sqllites """
+        
+        for sqllite in self.sqllites.values():
+            sqllite.disconnect()
+        
+        self.sqllites.clear()
+
+# the single(ton) instance
+SQL_LITE_POOL = SQLLitePool()
+
 ################################################################################
 if __name__ == '__main__':
     print("Testing the SQL Lite")
@@ -247,26 +311,14 @@ if __name__ == '__main__':
     sqll.create_table(schema)
     
     print("inserting entry")
-    entry = Entry.create_new(schema, 1, "sqll", {"foo": "hello", "bar": 42})   
-    sqll.insert_entry(schema, entry)
+
     
     print("inserting entries")
-    entries = [ \
-        Entry.create_new(schema, 2, "sqll", {"foo": "lorem", "bar": 99}),    
-        Entry.create_new(schema, 3, "sqll", {"foo": "ipsum", "bar": 11}),
-        Entry.create_new(schema, 4, "sqll", {"foo": "dolor", "bar": 11})
-    ]
-    sqll.insert_entries(schema, entries)
     
     print("loading")
-    table = sqll.load(schema)
-    table.printit()
     
     print("query without group")
-    table = sqll.load_better(schema, \
-        {"identity" : ID, "fooo" : "foo", "baar": "bar + 1"}, \
-        "bar < 50", None, "fooo")
-    table.printit()
+
     
     # TODO the groupping
     

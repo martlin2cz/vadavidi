@@ -4,7 +4,7 @@ The test for the raisers.
 import unittest
 
 from common.datas import Schema
-from outport_data.raisers_impls import SimpleCSVRaiser
+from outport_data.raisers_impls import SimpleCSVRaiser, SQLLiteRaiser
 
 
 ################################################################################
@@ -16,6 +16,12 @@ class RaisersTest(unittest.TestCase):
         raiser.csv.separator = ';'
         
         self.run_raiser(raiser)
+    
+    def test_SQLLiteRaiser(self):
+        raiser = SQLLiteRaiser()
+        
+        self.run_raiser(raiser)
+    
         
 ################################################################################       
     def run_raiser(self, raiser):

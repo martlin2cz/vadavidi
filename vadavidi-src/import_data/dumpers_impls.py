@@ -7,6 +7,7 @@ import sqlite3
 from common.simple_csv import SimpleCSV
 from import_data.base_dumpers import CommonFileDumper, BaseExistingFileHandler, \
 	FileDumper
+from common.sqlite_db import SQL_LITE_POOL
 
 
 ########################################################################
@@ -17,7 +18,7 @@ class SimpleCSVDumper(FileDumper):
 	csv = SimpleCSV(True, True)
 	
 	def __init__(self):
-		self.namer.extension = 'csv'
+		super().__init__("csv")
 
 	def dump_to_file(self, dataset_name, file_name, table):
 		self.csv.save_table(table, file_name)
@@ -27,81 +28,24 @@ class SQLiteDumper(CommonFileDumper):
 	""" The dumper dumping to the sqlite database. """
 	
 	def __init__(self):
-		self.namer.extension = 'db'
+		super().__init__("db")
 	
 	def open_the_file(self, dataset_name, file_name):
-		return sqlite3.connect(file_name)
+		return SQL_LITE_POOL.get(dataset_name)
 		
-	def dump_header(self, dataset_name, file_name, con_handle, schema):
-		self.create_table(con_handle, dataset_name, schema)
+	def dump_header(self, dataset_name, file_name, sqll_handle, schema):
+		sqll_handle.create_table(schema)
 		
-	# dumps the body (entries)
-	def dump_body(self, dataset_name, file_name, con_handle, schema, entries):
+	def dump_body(self, dataset_name, file_name, sqll_handle, schema, entries):
 		for entry in entries:
-			self.insert_entry(con_handle, dataset_name, schema, entry)
+			sqll_handle.insert_entry(schema, entry)
 	
-	# creates the table
-	def create_table(self, conn, dataset_name, schema):
-		table_name = self.table_name(dataset_name)
-		fields_decl = ", ".join(list(map(
-			lambda fn: self.column_name(fn) + " " + self.sql_type_of_field(schema, fn),
-			schema)))
-		
-		sql = "CREATE TABLE {0} (ordnum INT PRIMARY KEY, {1})" \
-				.format(table_name, fields_decl)
-		#print(sql)
-		
-		c = conn.cursor()
-		c.execute(sql)
-		conn.commit()
 	
-	# inserts the entry into the table
-	def insert_entry(self, conn, dataset_name, schema, entry):
-		
-		table_name = self.table_name(dataset_name)
-		fields_decl = ", ".join(list(map(
-			lambda fn: self.column_name(fn),
-			schema)))
-		
-		values_decl = ", ".join(list(map(
-			lambda fn: "?",
-			schema)))
-		
-		sql = "INSERT INTO {0} ({1}) VALUES ({2})" \
-				.format(table_name, fields_decl, values_decl)
-		#print(sql)
-		
-		values = list(map(
-			lambda fn: entry.value(fn),
-			schema))
-		
-		c = conn.cursor()
-		c.execute(sql, values)
-		conn.commit()
-		
-	# creates name of the table
-	def table_name(self, dataset_name):
-		return re.sub("[\W]", "_", dataset_name)
+	def close_the_file(self, dataset_name, file_name, handle):
+		# nothing to do in here
+		pass
 	
-	# creates name of column	
-	def column_name(self, field_name):
-		return re.sub("[\W]", "_", field_name)
-		
-	# obtains sql type of the field
-	def sql_type_of_field(self, schema, field_name):
-		field_type = schema[field_name]
-		
-		if field_type in ("int", "integer"):
-			return "INT"
-			
-		if field_type in ("decimal", "float"):
-			return "REAL"
-		
-		if field_type in ("bool", "boolean"):
-			return "BOOL"
-			
-		return "TEXT"
-
+# TODO batch insert sqllite dumper
 ########################################################################
 ########################################################################
 class DeletingHandler(BaseExistingFileHandler):

@@ -12,6 +12,9 @@ class FilesNamer:
     # the file extension
     extension: str
     
+    def __init__(self, extension):
+        self.extension = extension
+    
     def file_name(self, dataset_name):
         """ Creates the name of the dataset. """
         

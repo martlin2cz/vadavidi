@@ -71,7 +71,7 @@ class SimpleDisplayer(BaseDisplayer):
     def relativise(self, current_style, styles, x_step):
         """ Computes the left and with relative, and absolutes to x_step """
         total_width = sum(map(lambda x: x.bar_width + x.space_after, styles.values()))
-        ratio = (x_step / total_width)
+        ratio = (x_step / total_width) # TODO test with non-numerical x_field
         
         subsum = 0.0
         for style in styles.values():
