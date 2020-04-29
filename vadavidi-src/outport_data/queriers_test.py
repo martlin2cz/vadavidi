@@ -9,13 +9,15 @@ from common.elang import ELangNativeRenderer, ELangExpression, \
     ELangFieldReference, ELangParser
 from outport_data.base_queriers import AggregatingExpression
 from outport_data.base_queriers import Query
-from outport_data.queriers_impls import DefaultQuerier
+from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier
+from common.sqlite_db import SQL_LITE_POOL
 
 
 ################################################################################
 class QueriersTest(unittest.TestCase):
     schema = Schema({"foo": "str", "bar": "int", "baz": "enum"})
     elang = ELangParser()
+    dataset_name = "/tmp/testing_queriers"
     
     def _test_DefaultQuerier_compute(self):
         values_map = { "foo/baz": self.e("€foo + '/' + €baz"),
@@ -51,6 +53,8 @@ class QueriersTest(unittest.TestCase):
         computed = querier.agregate(groupped, grouppers)
         computed.printit()
 
+################################################################################
+
     def test_DefaultQuerier(self):
         values_map = {"fof": self.e("€foo [0]"), \
 #                      "foo": self.e("€foo"), \
@@ -64,7 +68,31 @@ class QueriersTest(unittest.TestCase):
         table = self.create_table()
         table.printit()
         
-        result = querier.query(table, query)
+        result = querier.query(self.dataset_name, table, query)
+        result.printit()
+        
+        
+    def test_SQLLiteQuerier(self):
+        try:
+            table = self.create_table()
+            sqll = SQL_LITE_POOL.get(self.dataset_name)
+            sqll.create_table(table.schema)
+            sqll.insert_entries(table.schema, table)
+        except Exception as ex:
+            print("Notice: Cannot prepare table because: " + str(ex))
+        
+        
+        values_map = {"fof": self.e("SUBSTR( €foo , 1, 1)"), \
+#                      "foo": self.e("€foo"), \
+                      "lbaz": self.e("LOWER( €baz )"), \
+                      "bardiv": self.e("€bar / 10")}
+        groups_map = {ID: "AVG", SOURCE: "COUNT", "fof": None, "lbaz": None,  "bardiv": "MAX" }
+        query = Query(values_map, groups_map)
+        
+        querier = SQLLiteQuerier()
+        querier.renderer = ELangNativeRenderer()
+        
+        result = querier.query(self.dataset_name, None, query)
         result.printit()
 
 ################################################################################

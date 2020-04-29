@@ -10,7 +10,7 @@ from typing import List, Any
 from common.datas import Schema
 from outport_data.base_queriers import EntryExpression, \
     BaseExpressionNativeRenderer
-from outport_data.queriers_impls import DefaultQuerier
+from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier
 
 
 ################################################################################
@@ -46,27 +46,28 @@ class ELangNativeRenderer(BaseExpressionNativeRenderer):
             raise ValueError("Not elang expression")
         
         if isinstance(querier, DefaultQuerier):
-            return self.to_python_native(expression, querier, dataset_identifier, entry_identifier)
+            return self.to_python_native(expression, entry_identifier)
  
-# FIXME SQLiteQuerier        
-#        if isinstance(querier, SQLiteQuerier):
-#            return self.to_sqllite_native(expression, entry_identifier)
+        if isinstance(querier, SQLLiteQuerier):
+            return self.to_sqllite_native(expression, dataset_identifier)
         
         raise ValueError("Unsupported querier")
 
-    def to_python_native(self, expression, querier, dataset_identifier, entry_identifier):
+    def to_python_native(self, expression,  entry_identifier):
         """ Converts the expression to pyhon native expression """
         
         return " ".join(list(map(
             lambda i: ("{0}['{1}']".format(entry_identifier, i.field_name) \
                         if isinstance(i, ELangFieldReference) else i),
             expression.items)))
-    
-    def to_sqllite_native(self, expression, entry_identifier):
-        """ Converts the expression to sql native expression """
         
-        raise Exception("TODO")
-            
+    def to_sqllite_native(self, expression,  dataset_identifier):
+        """ Converts the expression to sqllite native expression """
+        
+        return " ".join(list(map(
+            lambda i: ("{0}.{1}".format(dataset_identifier, i.field_name) \
+                        if isinstance(i, ELangFieldReference) else i),
+            expression.items)))
         
 ################################################################################    
 class ELangParser:

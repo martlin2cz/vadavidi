@@ -51,7 +51,7 @@ class Query:
 class BaseQuerier(ABC):
     """ The (base) querier. """
     
-    def query(self, table:Table, query:Query):
+    def query(self, dataset_name:str, table:Table, query:Query):
         """ Runs the query on the table """
         
         yield Exception("Implement Me!")

@@ -1,6 +1,7 @@
 """
 The implementations of the queriers.
 """
+from common.sqlite_db import SQLLite, SQL_LITE_POOL
 
 ################################################################################
 
@@ -27,7 +28,7 @@ class DefaultQuerier(BaseQuerier):
     """
     renderer: BaseExpressionNativeRenderer
 
-    def query(self, table:Table, query:Query):
+    def query(self, dataset_name:str, table:Table, query:Query):
         values_map = query.values_map
         computed = self.compute(table, values_map)
         
@@ -255,4 +256,64 @@ class DefaultQuerier(BaseQuerier):
 #         raise ValueError("Unsupprted aggregator: " + aggregator)
 #     
 ################################################################################
+################################################################################
+class SQLLiteQuerier(BaseQuerier):
+    """
+    The sqllite querier. The query is converted to SQLLite query and executed 
+    directly on the database table.
+    """
+    
+    # the renderer of the expressions
+    renderer: BaseExpressionNativeRenderer
+    
+    def query(self, dataset_name:str, table:Table, query:Query):
         
+        values_map = query.values_map
+        
+        
+        groups_map = query.groups_map
+        fields = self.generate_fields(dataset_name, values_map, groups_map)
+        
+        where = None
+        
+        grouppers_names = list(filter(lambda gn: (query.groups_map[gn] is None), \
+                             query.groups_map.keys()))
+        
+        group = self.generate_groups(grouppers_names)
+        
+        order = None
+
+        sqll = SQL_LITE_POOL.get(dataset_name)
+        schema = self.create_schema(values_map)
+        return sqll.load_better(schema, fields, where, group, order)
+
+################################################################################
+
+    def create_schema(self, values_map):
+        fields = dict(map(lambda vn: (vn, COMPUTED), values_map.keys()))
+        return Schema(fields)
+
+################################################################################
+
+    def generate_fields(self, dataset_name, values_map, groups_map):
+        return dict(map(lambda vn: \
+            (vn, self.generate_field(dataset_name, vn, 
+                                     values_map[vn], groups_map[vn])),
+            values_map.keys()))
+
+    def generate_field(self, dataset_name, value_name, value_expr, agregator):
+        table_name = SQLLite.table_name(dataset_name)
+        sql_expr = self.renderer.to_native(value_expr, self, table_name, None)
+        
+        if agregator is None:
+            return "{0}".format(sql_expr)
+        else:
+            return "{1}({0})".format(sql_expr, agregator)
+    
+        
+################################################################################        
+
+    def generate_groups(self, grouppers_names):
+        return grouppers_names
+    
+################################################################################
