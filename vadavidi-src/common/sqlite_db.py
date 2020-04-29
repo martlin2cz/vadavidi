@@ -12,6 +12,7 @@ from typing import Mapping
 import atexit
 from common.utils import FilesNamer
 import re
+from matplotlib.dates import AutoDateFormatter
 
 
 ################################################################################
@@ -67,11 +68,11 @@ class SQLLite:
         result = self.execute(sql)
         return self.to_table(schema, result)
     
-    def load_better(self, schema, \
+    def load_better(self, schema, metas_generate, \
                     fields = None, where = None, group = None, having = None, order = None):
-        sql = self.create_select_sql(schema, fields, where, group, having, order)
+        sql = self.create_select_sql(schema, metas_generate, fields, where, group, having, order)
         result = self.execute(sql)
-        new_schema = self.create_schema(fields)
+        new_schema = self.create_schema(fields, result)
         return self.to_table(new_schema, result)
         
 ################################################################################   
@@ -107,11 +108,11 @@ class SQLLite:
             .format(self.table_name)
             
             
-    def create_select_sql(self, schema, fields, where, group, having, order):
+    def create_select_sql(self, schema, metas_generate, fields, where, group, having, order):
         
         sql = "SELECT "
         if fields:
-            sql += self.fields_to_sql(schema, fields)
+            sql += self.fields_to_sql(schema, metas_generate, fields)
         else:
             sql += "*"
         
@@ -139,15 +140,19 @@ class SQLLite:
     def to_table(self, schema, result):          
         table = RowsMutableTable(schema)
         for row in result:
-            entry = self.to_entry(schema, row)
+            entry = self.to_entry(schema, result, row)
             table += entry
             
         return table.to_table()
             
-    def to_entry(self, schema, row):
+    def to_entry(self, schema, result, row):
+        raw_values = dict(map( \
+            lambda fd, val: (fd[0], val), \
+            result.description, row))
+        
         values = dict(map( \
-            lambda fn, val: (fn, val), \
-            schema, row))
+            lambda fn: (fn, raw_values[fn]), \
+            schema))
         
         return Entry.create(schema, values)
     
@@ -161,11 +166,16 @@ class SQLLite:
             lambda e: self.create_entry_values(schema, e),
             entries))
 
-    def create_schema(self, fields):
-        new_fields = dict(map(
-            lambda fn: (fn, self.field_type(fn, fields[fn])),
-            fields.keys()))
-        
+    def create_schema(self, fields, result):
+        if fields:
+            new_fields = dict(map(
+                lambda fn: (fn, self.field_type(fn, fields[fn])),
+                fields.keys()))
+        else:
+            new_fields = dict(map(
+                lambda vs: (vs[0], "(Computed)"),
+                result.description))
+            
         return Schema(new_fields)
 
 ################################################################################
@@ -197,13 +207,23 @@ class SQLLite:
         return "TEXT"
     
 
-    def fields_to_sql(self, schema, fields):
+    def fields_to_sql(self, schema, metas_generate, fields):
+        #TODO if group by, but not by ID/SCHEMA, then generate as well       
         if ID not in fields.keys():
-            fields = { **{ID: "'no id'"}, **fields }
+            if metas_generate:
+                #fields_str = ", ".join(list(schema))
+                fields_str = ", ".join([ID, SOURCE])
+                id_value = "ROW_NUMBER() OVER ( ORDER BY {0} )".format(fields_str)
+            else:
+                id_value = ID
+            fields = { **{ID: id_value}, **fields }
         
         if SOURCE not in fields.keys():
-            fields = { **{SOURCE: "'sql lite'"}, **fields }
-        
+            if metas_generate:
+                source_value = "'sqlite'"
+            else:
+                source_value = SOURCE
+            fields = { **{SOURCE: source_value}, **fields }
             
         return ", ".join(map( \
             lambda fn: "{0} AS {1}".format(fields[fn], fn),
@@ -303,26 +323,4 @@ SQL_LITE_POOL = SQLLitePool()
 
 ################################################################################
 if __name__ == '__main__':
-    print("Testing the SQL Lite")
-    schema = Schema({"foo": "str", "bar": "int"})
-
-    os.remove("/tmp/dbf.db")
-#    with SQLLite("/tmp/dbf.db", "samples") as sqll:
-    sqll = SQLLite("/tmp/dbf.db", "samples")
-    sqll.connect()
-    
-    print("creating table")
-    sqll.create_table(schema)
-    
-    print("inserting entry")
-
-    
-    print("inserting entries")
-    
-    print("loading")
-    
-    print("query without group")
-
-    
-    # TODO the groupping
-    
+    print("See sqlite_test for the tests")

@@ -310,6 +310,7 @@ class SQLLiteQuerier(BaseQuerier):
     renderer: BaseExpressionNativeRenderer
     
     def query(self, dataset_name:str, table:Table, query:Query):
+        schema = table.schema
         
         fields = None
         if query.values_map:
@@ -342,8 +343,9 @@ class SQLLiteQuerier(BaseQuerier):
             order = query.order_by
 
         sqll = SQL_LITE_POOL.get(dataset_name)
-        schema = self.create_schema(query.values_map)
-        return sqll.load_better(schema, fields, where, group, having, order)
+        new_schema = self.create_schema(query.values_map)
+        metas_generate = self.metas_generate(query.values_map, query.groups_map)
+        return sqll.load_better(new_schema, metas_generate, fields, where, group, having, order)
 
 
     def add_to_where(self, where, condition):
@@ -351,7 +353,20 @@ class SQLLiteQuerier(BaseQuerier):
             return condition
         else:
             return "({0}) AND ({1})".format(where, condition)
-            
+        
+    def metas_generate(self, values_map, groups_map):
+        values_names = values_map.keys()
+        grouppers_names = BaseQuerier.create_grouppers_names(groups_map)
+
+        if (ID not in values_names) or (SOURCE not in values_names):
+            return True
+        
+        if (ID in grouppers_names) or (SOURCE in grouppers_names):
+            return True
+        
+        return False
+        
+        
 ################################################################################
 
     def create_schema(self, values_map):

@@ -104,14 +104,7 @@ class QueriersTest(unittest.TestCase):
         
     def test_SQLLiteQuerier(self):
         print("=== SQLLiteQuerier")
-        try:
-            table = self.create_table()
-            table.printit()
-            sqll = SQL_LITE_POOL.get(self.dataset_name)
-            sqll.create_table(table.schema)
-            sqll.insert_entries(table.schema, table)
-        except Exception as ex:
-            print("Notice: Cannot prepare table because: " + str(ex))
+        self.try_create_db_table()
         
         
         before_values_filter = self.e("€" + ID + " < 7")
@@ -119,7 +112,7 @@ class QueriersTest(unittest.TestCase):
                       "lbaz": self.e("LOWER( €baz )"), \
                       "bardiv": self.e("€bar / 10")}
         after_values_filter = self.e("€bardiv < 8")
-        groups_map = {ID: "AVG", SOURCE: "COUNT", "fof": None, "lbaz": None,  "bardiv": "MAX" }
+        groups_map = {ID: "AVG", SOURCE: "COUNT", "fof": None, "lbaz": None,  "bardiv": "MAX" } #FIXME ID and SOURCE aggregator has no sense
         after_groupped_filter = self.e("€bardiv < 6")
         order_by = ["fof", "lbaz"]
          
@@ -129,11 +122,24 @@ class QueriersTest(unittest.TestCase):
         
         querier = SQLLiteQuerier()
         querier.renderer = ELangNativeRenderer()
-        
-        result = querier.query(self.dataset_name, None, query)
+        table = DatasUtil.empty_table(self.schema) #FIXME avoid such
+        result = querier.query(self.dataset_name, table, query)
         result.printit()
 
+
+
 ################################################################################
+
+        
+    def try_create_db_table(self):    
+        try:
+            table = self.create_table()
+            table.printit()
+            sqll = SQL_LITE_POOL.get(self.dataset_name)
+            sqll.create_table(table.schema)
+            sqll.insert_entries(table.schema, table)
+        except Exception as ex:
+            print("Notice: Cannot prepare table because: " + str(ex))
         
     def __test_DefaultQuerier(self):
         print("Deprecated")
