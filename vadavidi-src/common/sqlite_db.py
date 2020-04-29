@@ -68,8 +68,8 @@ class SQLLite:
         return self.to_table(schema, result)
     
     def load_better(self, schema, \
-                    fields = None, where = None, group = None, order = None):
-        sql = self.create_select_sql(schema, fields, where, group, order)
+                    fields = None, where = None, group = None, having = None, order = None):
+        sql = self.create_select_sql(schema, fields, where, group, having, order)
         result = self.execute(sql)
         new_schema = self.create_schema(fields)
         return self.to_table(new_schema, result)
@@ -107,7 +107,7 @@ class SQLLite:
             .format(self.table_name)
             
             
-    def create_select_sql(self, schema, fields, where, group, order):
+    def create_select_sql(self, schema, fields, where, group, having, order):
         
         sql = "SELECT "
         if fields:
@@ -124,7 +124,11 @@ class SQLLite:
             
         if group:
             sql += " GROUP BY "
-            sql += self.group_to_sql(schema, group)        
+            sql += self.group_to_sql(schema, group)
+        
+        if having:
+            sql += " HAVING "
+            sql += self.condition_to_sql(schema, having)
         
         if order:
             sql += " ORDER BY "

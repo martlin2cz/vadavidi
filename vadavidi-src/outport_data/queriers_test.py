@@ -4,12 +4,12 @@ The test for the queriers
 import unittest
 
 from common.datas import Schema, Entry, ID, SOURCE
-from common.datas_util import RowsMutableTable
+from common.datas_util import RowsMutableTable, DatasUtil
 from common.elang import ELangNativeRenderer, ELangExpression, \
     ELangFieldReference, ELangParser
 from outport_data.base_queriers import AggregatingExpression
 from outport_data.base_queriers import Query
-from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier
+from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier, COMPUTED
 from common.sqlite_db import SQL_LITE_POOL
 
 
@@ -19,7 +19,20 @@ class QueriersTest(unittest.TestCase):
     elang = ELangParser()
     dataset_name = "/tmp/testing_queriers"
     
+    def _test_DefaultQuerier_filter(self):
+        print("=== DefaultQuerier filter")
+        expr = self.e("( €baz in ('YES', 'NO') ) and ( €bar < 50 )")
+        
+        querier = DefaultQuerier()
+        querier.renderer = ELangNativeRenderer()
+        table = self.create_table()
+        table.printit()
+        
+        filtered = querier.filter(table, expr)
+        filtered.printit()
+    
     def _test_DefaultQuerier_compute(self):
+        print("=== DefaultQuerier compute")
         values_map = { "foo/baz": self.e("€foo + '/' + €baz"),
                        "2 x bar": self.e("2 * €bar")}
         
@@ -32,36 +45,53 @@ class QueriersTest(unittest.TestCase):
         computed.printit()
         
     def _test_DefaultQuerier_group(self):
-        grouppers_names = [ "foo", "baz" ]
+        print("=== DefaultQuerier group")
+        grouppers_map = { "foo": None, "baz": None, ID: "...", SOURCE: "...", "baz": "..." }
         
         querier = DefaultQuerier()
         table = self.create_table()
         table.printit()
         
-        computed = querier.group(table, grouppers_names)
+        computed = querier.group(table, grouppers_map)
         computed.printit()
 
     def _test_DefaultQuerier_agregate(self):
-        grouppers = {ID: "avg", SOURCE: "count", "foo": None, "baz": None }
-        grouppers_names = [ "foo", "baz" ]
+        print("=== DefaultQuerier agregate")
+        grouppers_map = {ID: "avg", SOURCE: "count", "foo": None, "bar": "count", "baz": None }
         
         querier = DefaultQuerier()
         table = self.create_table()
         table.printit()
         
-        groupped = querier.group(table, grouppers_names)
-        computed = querier.agregate(groupped, grouppers)
+        groupped = querier.group(table, grouppers_map)
+        computed = querier.agregate(groupped, grouppers_map)
         computed.printit()
 
+    def _test_DefaultQuerier_order(self):
+        print("=== DefaultQuerier order")
+        order_by = [SOURCE, "baz"]
+        
+        querier = DefaultQuerier()
+        table = self.create_table()
+        table.printit()
+        
+        filtered = querier.order(table, order_by)
+        filtered.printit()
 ################################################################################
 
     def test_DefaultQuerier(self):
+        print("=== DefaultQuerier")
+        before_values_filter = self.e("€" + ID + " < 7")
         values_map = {"fof": self.e("€foo [0]"), \
-#                      "foo": self.e("€foo"), \
                       "lbaz": self.e("€baz . lower()"), \
                       "bardiv": self.e("€bar / 10")}
+        after_values_filter = self.e("€bardiv < 8")
         groups_map = {ID: "avg", SOURCE: "count", "fof": None, "lbaz": None,  "bardiv": "max" }
-        query = Query(values_map, groups_map)
+        after_groupped_filter = self.e("€bardiv < 6")
+        order_by = ["fof", "lbaz"]
+         
+        query = Query(before_values_filter, values_map, after_values_filter, \
+                      groups_map, after_groupped_filter, order_by)
         
         querier = DefaultQuerier()
         querier.renderer = ELangNativeRenderer()
@@ -73,8 +103,10 @@ class QueriersTest(unittest.TestCase):
         
         
     def test_SQLLiteQuerier(self):
+        print("=== SQLLiteQuerier")
         try:
             table = self.create_table()
+            table.printit()
             sqll = SQL_LITE_POOL.get(self.dataset_name)
             sqll.create_table(table.schema)
             sqll.insert_entries(table.schema, table)
@@ -82,12 +114,18 @@ class QueriersTest(unittest.TestCase):
             print("Notice: Cannot prepare table because: " + str(ex))
         
         
+        before_values_filter = self.e("€" + ID + " < 7")
         values_map = {"fof": self.e("SUBSTR( €foo , 1, 1)"), \
-#                      "foo": self.e("€foo"), \
                       "lbaz": self.e("LOWER( €baz )"), \
                       "bardiv": self.e("€bar / 10")}
+        after_values_filter = self.e("€bardiv < 8")
         groups_map = {ID: "AVG", SOURCE: "COUNT", "fof": None, "lbaz": None,  "bardiv": "MAX" }
-        query = Query(values_map, groups_map)
+        after_groupped_filter = self.e("€bardiv < 6")
+        order_by = ["fof", "lbaz"]
+         
+        query = Query(before_values_filter, values_map, after_values_filter, \
+                      groups_map, after_groupped_filter, order_by)
+        
         
         querier = SQLLiteQuerier()
         querier.renderer = ELangNativeRenderer()
@@ -97,7 +135,8 @@ class QueriersTest(unittest.TestCase):
 
 ################################################################################
         
-    def _test_DefaultQuerier(self):
+    def __test_DefaultQuerier(self):
+        print("Deprecated")
         querier = DefaultQuerier()
         querier.renderer = ELangNativeRenderer()
         
@@ -125,7 +164,12 @@ class QueriersTest(unittest.TestCase):
 ################################################################################
 
     def e(self, elang_str):
-        return self.elang.parse(self.schema, elang_str)
+        xschema = self.schema
+        xschema = DatasUtil.add_to_schema(xschema, "fof", COMPUTED)
+        xschema = DatasUtil.add_to_schema(xschema, "lbaz", COMPUTED)
+        xschema = DatasUtil.add_to_schema(xschema, "bardiv", COMPUTED)
+            
+        return self.elang.parse(xschema, elang_str)
     
     
     def create_table(self):

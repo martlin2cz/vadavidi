@@ -29,17 +29,42 @@ class DefaultQuerier(BaseQuerier):
     renderer: BaseExpressionNativeRenderer
 
     def query(self, dataset_name:str, table:Table, query:Query):
-        values_map = query.values_map
-        computed = self.compute(table, values_map)
         
-        grouppers_names = list(filter(lambda gn: (query.groups_map[gn] is None), \
-                             query.groups_map.keys()))
-        groupped = self.group(computed, grouppers_names)
+        if query.before_values_filter is not None:
+            table = self.filter(table, query.before_values_filter)
         
-        groups = query.groups_map
-        agregated = self.agregate(groupped, groups)
+        if query.values_map is not None:
+            table = self.compute(table, query.values_map)
+        
+        if query.after_values_filter is not None:
+            table = self.filter(table, query.after_values_filter)
+        
+        if query.groups_map is not None:
+            if list(query.groups_map.keys()) != list(table.schema):
+                raise ValueError("Group fields mismatch")
+            
+            table = self.group(table, query.groups_map)
+            table = self.agregate(table, query.groups_map)
+            
+        if query.after_groupped_filter is not None:
+            table = self.filter(table, query.after_groupped_filter)
+        
+        if query.order_by is not None:
+            table = self.order(table, query.order_by)
+    
+        return table
 
-        return agregated
+################################################################################       
+    def filter(self, table, filter_expr):
+        schema = table.schema
+        result = RowsMutableTable(schema)
+        
+        for entry in table:
+            value = self.compute_value(entry, filter_expr)
+            if value:
+                result += entry
+                
+        return result.to_table()
 
 ################################################################################       
 
@@ -63,33 +88,23 @@ class DefaultQuerier(BaseQuerier):
     
     def compute_entry(self, schema, entry, values_map):
         values = dict(map(lambda vn: \
-                          (vn, self.compute_value(entry, vn, values_map[vn])), \
+                          (vn, self.compute_value(entry, values_map[vn])), \
                           values_map.keys()))
         
         return Entry.create_new(schema, entry[ID], entry[SOURCE], values)
     
-    def compute_value(self, entry, value_name, value_expression):
-        ENTRY_IDENTIFIER = "_entry_"
-        python_expr = self.renderer.to_native(value_expression, self, None, ENTRY_IDENTIFIER)
-        
-        try:
-            return eval(python_expr, globals(),  { ENTRY_IDENTIFIER: entry } )
-        except:
-            print("The expression evaluation failed: the " + \
-                  str(value_expression) + " of " + str(entry))
-            #TODO handle error properly
-            return None
-        
         
 ################################################################################       
-    def group(self, table, grouppers_names):
+    def group(self, table, groups_map):
         """ Groups the table, based on the grouppers to map 
         (grouppers) -> list of entries with that groupper_value """
         
-        table_groups = self.compute_groups(table, grouppers_names)
-        
+        grouppers_names = self.create_grouppers_names(groups_map)
         schema = table.schema
+         
+        table_groups = self.compute_groups(table, grouppers_names)
         return self.group_table(schema, table_groups, grouppers_names)
+    
     
     def compute_groups(self, table, grouppers_names):
         result = {}
@@ -128,8 +143,8 @@ class DefaultQuerier(BaseQuerier):
     def schema_of_groupped(self, schema, grouppers_names):
        
         group_names_typed = dict(map(lambda vn: (vn, \
-                (schema[vn] if (vn in grouppers_names) else "SubTable")), \
-            grouppers_names))
+                (schema[vn] if (vn in grouppers_names) else "(SubTable)")), \
+            schema))
         return Schema(group_names_typed)
 
     def groupper_value(self, group_entries, grouppers_vals_dict, \
@@ -152,7 +167,11 @@ class DefaultQuerier(BaseQuerier):
         return result.to_table()
 
     def schema_of_agregated(self, schema, groups):
-        return schema #TODO schema
+        grouppers_names = self.create_grouppers_names(groups)
+        fields = dict(map(lambda vn: (vn, \
+                (schema[vn] if (vn in grouppers_names) else "(Agregated)")), \
+            schema))
+        return Schema(fields)
     
     def compute_agregated_entry(self, schema, entry, groups):
         values = dict(map(lambda fn: \
@@ -190,7 +209,31 @@ class DefaultQuerier(BaseQuerier):
         raise ValueError("Unsupprted aggregator: " + agregator)
 
 ################################################################################
-    
+
+    def order(self, table, order_by):
+        entries = list(table)
+        entries.sort(key = lambda e: tuple(DatasUtil.extract(e, order_by).values()))
+        
+        schema = table.schema
+        return Table(schema, entries)
+
+################################################################################
+    def compute_value(self, entry, value_expression):
+        ENTRY_IDENTIFIER = "_entry_"
+        python_expr = self.renderer.to_native(value_expression, self, None, ENTRY_IDENTIFIER)
+        
+        try:
+            return eval(python_expr, globals(),  { ENTRY_IDENTIFIER: entry } )
+        except Exception as ex:
+            print("The " + str(value_expression) + " of " + str(entry) \
+                  + " ( " + python_expr + " ) evaluation failed: " + str(ex))
+
+            #TODO handle error properly
+            return None
+
+################################################################################
+
+
 #     
 #     def _agregate(self, query, schema, x_axis_field, groupped, new_table):
 #         """ Agreggates the values of the subtables. """
@@ -268,30 +311,61 @@ class SQLLiteQuerier(BaseQuerier):
     
     def query(self, dataset_name:str, table:Table, query:Query):
         
-        values_map = query.values_map
-        
-        
-        groups_map = query.groups_map
-        fields = self.generate_fields(dataset_name, values_map, groups_map)
+        fields = None
+        if query.values_map:
+            fields = self.generate_fields(dataset_name, query.values_map, query.groups_map)
         
         where = None
+        if query.before_values_filter:
+            before_value_condition = self.generate_condition(dataset_name, query.before_values_filter, None)
+            where = self.add_to_where(where, before_value_condition)
+            
+        if query.after_values_filter:
+            after_value_condition = self.generate_condition(dataset_name, query.after_values_filter, query.values_map)
+            where = self.add_to_where(where, after_value_condition)
         
-        grouppers_names = list(filter(lambda gn: (query.groups_map[gn] is None), \
-                             query.groups_map.keys()))
+        group = None
+        if query.groups_map:
+            grouppers_names = BaseQuerier.create_grouppers_names(query.groups_map)
+            group = self.generate_groups(grouppers_names)
         
-        group = self.generate_groups(grouppers_names)
+        having = None
+        if query.after_groupped_filter:
+            after_groupped_condition = self.generate_condition(dataset_name, query.after_groupped_filter, query.values_map)
+            if query.groups_map:
+                having = after_groupped_condition
+            else:
+                where = self.add_to_where(where, after_groupped_condition)
         
         order = None
+        if query.order_by:
+            order = query.order_by
 
         sqll = SQL_LITE_POOL.get(dataset_name)
-        schema = self.create_schema(values_map)
-        return sqll.load_better(schema, fields, where, group, order)
+        schema = self.create_schema(query.values_map)
+        return sqll.load_better(schema, fields, where, group, having, order)
 
+
+    def add_to_where(self, where, condition):
+        if where is None:
+            return condition
+        else:
+            return "({0}) AND ({1})".format(where, condition)
+            
 ################################################################################
 
     def create_schema(self, values_map):
         fields = dict(map(lambda vn: (vn, COMPUTED), values_map.keys()))
         return Schema(fields)
+
+################################################################################        
+    
+    def generate_condition(self, dataset_name, condition_expr, values_map):
+        if values_map is None:
+            table_name = SQLLite.table_name(dataset_name)
+            return self.renderer.to_native(condition_expr, self, table_name, None)
+        else:
+            return self.renderer.to_native(condition_expr, self, None, values_map)
 
 ################################################################################
 

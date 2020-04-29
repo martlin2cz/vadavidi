@@ -49,7 +49,7 @@ class ELangNativeRenderer(BaseExpressionNativeRenderer):
             return self.to_python_native(expression, entry_identifier)
  
         if isinstance(querier, SQLLiteQuerier):
-            return self.to_sqllite_native(expression, dataset_identifier)
+            return self.to_sqllite_native(expression, dataset_identifier, entry_identifier)
         
         raise ValueError("Unsupported querier")
 
@@ -61,13 +61,22 @@ class ELangNativeRenderer(BaseExpressionNativeRenderer):
                         if isinstance(i, ELangFieldReference) else i),
             expression.items)))
         
-    def to_sqllite_native(self, expression,  dataset_identifier):
+    def to_sqllite_native(self, expression,  dataset_identifier, entry_expressions):
         """ Converts the expression to sqllite native expression """
         
         return " ".join(list(map(
-            lambda i: ("{0}.{1}".format(dataset_identifier, i.field_name) \
+            lambda i: (self.sql_field_ref(dataset_identifier, entry_expressions, i.field_name) \
                         if isinstance(i, ELangFieldReference) else i),
             expression.items)))
+    
+    def sql_field_ref(self, dataset_identifier, entry_expressions, field_name):
+        if dataset_identifier:
+            return "{0}.{1}".format(dataset_identifier, field_name)
+        elif entry_expressions:
+            field_expression = entry_expressions[field_name]
+            return self.to_sqllite_native(field_expression, None, None)
+        else:
+            return field_name
         
 ################################################################################    
 class ELangParser:
