@@ -3,10 +3,10 @@ The test for the queriers
 """
 import unittest
 
-from common.datas import Schema, Entry
+from common.datas import Schema, Entry, ID, SOURCE
 from common.datas_util import RowsMutableTable
 from common.elang import ELangNativeRenderer, ELangExpression, \
-    ELangFieldReference
+    ELangFieldReference, ELangParser
 from outport_data.base_queriers import AggregatingExpression
 from outport_data.base_queriers import Query
 from outport_data.queriers_impls import DefaultQuerier
@@ -15,9 +15,61 @@ from outport_data.queriers_impls import DefaultQuerier
 ################################################################################
 class QueriersTest(unittest.TestCase):
     schema = Schema({"foo": "str", "bar": "int", "baz": "enum"})
+    elang = ELangParser()
+    
+    def _test_DefaultQuerier_compute(self):
+        values_map = { "foo/baz": self.e("€foo + '/' + €baz"),
+                       "2 x bar": self.e("2 * €bar")}
         
+        querier = DefaultQuerier()
+        querier.renderer = ELangNativeRenderer()
+        table = self.create_table()
+        table.printit()
+        
+        computed = querier.compute(table, values_map)
+        computed.printit()
+        
+    def _test_DefaultQuerier_group(self):
+        grouppers_names = [ "foo", "baz" ]
+        
+        querier = DefaultQuerier()
+        table = self.create_table()
+        table.printit()
+        
+        computed = querier.group(table, grouppers_names)
+        computed.printit()
+
+    def _test_DefaultQuerier_agregate(self):
+        grouppers = {ID: "avg", SOURCE: "count", "foo": None, "baz": None }
+        grouppers_names = [ "foo", "baz" ]
+        
+        querier = DefaultQuerier()
+        table = self.create_table()
+        table.printit()
+        
+        groupped = querier.group(table, grouppers_names)
+        computed = querier.agregate(groupped, grouppers)
+        computed.printit()
 
     def test_DefaultQuerier(self):
+        values_map = {"fof": self.e("€foo [0]"), \
+#                      "foo": self.e("€foo"), \
+                      "lbaz": self.e("€baz . lower()"), \
+                      "bardiv": self.e("€bar / 10")}
+        groups_map = {ID: "avg", SOURCE: "count", "fof": None, "lbaz": None,  "bardiv": "max" }
+        query = Query(values_map, groups_map)
+        
+        querier = DefaultQuerier()
+        querier.renderer = ELangNativeRenderer()
+        table = self.create_table()
+        table.printit()
+        
+        result = querier.query(table, query)
+        result.printit()
+
+################################################################################
+        
+    def _test_DefaultQuerier(self):
         querier = DefaultQuerier()
         querier.renderer = ELangNativeRenderer()
         
@@ -41,6 +93,13 @@ class QueriersTest(unittest.TestCase):
         result.printit()
         print("-- done --")
 
+
+################################################################################
+
+    def e(self, elang_str):
+        return self.elang.parse(self.schema, elang_str)
+    
+    
     def create_table(self):
         mt = RowsMutableTable(self.schema)
 
@@ -51,6 +110,7 @@ class QueriersTest(unittest.TestCase):
         mt.add(Entry.create_new(self.schema, 4, "a", {"foo": "hello", "bar": 51, "baz": "YES"}))
         mt.add(Entry.create_new(self.schema, 5, "b", {"foo": "test", "bar": 91, "baz": "YES"}))
         mt.add(Entry.create_new(self.schema, 6, "a", {"foo": "test", "bar": 61, "baz": "MAYBE"}))
+        mt.add(Entry.create_new(self.schema, 7, "a", {"foo": "test", "bar": 41, "baz": "YES"}))
         
         return mt.to_table()
       

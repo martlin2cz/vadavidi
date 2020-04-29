@@ -41,12 +41,12 @@ class ELangFieldReference:
 class ELangNativeRenderer(BaseExpressionNativeRenderer):
     """ The expression native renderer for the elang expressions """
     
-    def to_native(self, expression, querier, entry_identifier):
+    def to_native(self, expression, querier, dataset_identifier, entry_identifier):
         if not isinstance(expression, ELangExpression):
             raise ValueError("Not elang expression")
         
         if isinstance(querier, DefaultQuerier):
-            return self.to_python_native(expression, entry_identifier)
+            return self.to_python_native(expression, querier, dataset_identifier, entry_identifier)
  
 # FIXME SQLiteQuerier        
 #        if isinstance(querier, SQLiteQuerier):
@@ -54,7 +54,7 @@ class ELangNativeRenderer(BaseExpressionNativeRenderer):
         
         raise ValueError("Unsupported querier")
 
-    def to_python_native(self, expression, entry_identifier):
+    def to_python_native(self, expression, querier, dataset_identifier, entry_identifier):
         """ Converts the expression to pyhon native expression """
         
         return " ".join(list(map(

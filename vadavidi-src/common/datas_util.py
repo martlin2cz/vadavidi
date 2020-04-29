@@ -43,6 +43,12 @@ class DatasUtil:
 		""" Returns the list of values of given field over the whole table """
 		
 		return list(map(lambda e: e[field_name], table))
+	
+	@staticmethod
+	def extract(entry, field_names):
+		""" Extracts the specified fields from the entry, returns as map """
+		
+		return dict(map(lambda fn: (fn, entry[fn]), field_names))
 
 ########################################################################
 class RowsMutableTable:
