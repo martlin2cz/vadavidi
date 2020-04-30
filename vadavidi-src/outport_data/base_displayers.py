@@ -4,7 +4,7 @@ the resulting table to the user as a chart. Via the GUI or not (rendered to
 file).
 """
 from abc import abstractmethod, ABC
-from builtins import str
+from builtins import str, staticmethod
 from dataclasses import dataclass
 
 
@@ -13,6 +13,17 @@ from dataclasses import dataclass
 class BaseSeriesStyle:
     """ The general style of the chart series. Extend to add particular 
     implementation/char kind specific fields. """
+    
+    @staticmethod
+    def create(clazz, **values):
+        """ Creates the style with given class and properties values """
+        
+        style = clazz()
+        
+        for name, value in values.items():
+            style.__setattr__(name, value)
+            
+        return style
     
 ################################################################################
 class StyleBuilder:
@@ -25,6 +36,7 @@ class StyleBuilder:
     
         self.style = clazz()
         
+        
     def set(self, property_name, property_value):
         """ Sets the value of the field """
         
@@ -36,9 +48,9 @@ class StyleBuilder:
     
     def sets(self, **properties):
         """ Sets the values of the fields """
-        
         for name, value in properties.items():
             self.set(name, value)
+        
         return self
 
     def build(self):

@@ -6,7 +6,16 @@ from common.simple_csv import SimpleCSV
 from common.utils import FilesNamer
 from outport_data.base_raisers import BaseRaiser
 from common.sqlite_db import SQL_LITE_POOL
+from common.datas_util import DatasUtil
 
+
+################################################################################
+class NoopRaiser(BaseRaiser):
+    """ The raiser which rises nothing. Usefull when the querier loads the table
+    during the querying. """
+    
+    def run(self, dataset_name, schema):
+        return DatasUtil.empty_table(schema)
 
 ################################################################################
 class SimpleCSVRaiser(BaseRaiser):
@@ -32,4 +41,6 @@ class SQLLiteRaiser(BaseRaiser):
     def run(self, dataset_name, schema):
         sqllite = SQL_LITE_POOL.get(dataset_name)
         return sqllite.load(schema)
+    
+
     

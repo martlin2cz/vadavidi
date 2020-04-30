@@ -70,15 +70,23 @@ class SimpleDisplayer(BaseDisplayer):
         
     def relativise(self, current_style, styles, x_step):
         """ Computes the left and with relative, and absolutes to x_step """
-        total_width = sum(map(lambda x: x.bar_width + x.space_after, styles.values()))
+        
+        total_width = sum(map(lambda x: 
+          x.bar_width + x.space_after if isinstance(x, BarChartSeriesStyle) else 0, 
+          styles.values()))
+        
         ratio = (x_step / total_width) # TODO test with non-numerical x_field
         
         subsum = 0.0
         for style in styles.values():
+            if not isinstance(style, BarChartSeriesStyle):
+                continue
+            
             if style is current_style:
                 
                 left = subsum * ratio 
-                width = current_style.bar_width * ratio
+                width = current_style.bar_width * ratio \
+                    
                 return (left, width)
             
             subsum += (style.bar_width + style.space_after)
@@ -87,10 +95,13 @@ class SimpleDisplayer(BaseDisplayer):
         
     def show_bar(self, x_values, name, values, style, styles):
         """ Shows the bar chart """
+        x_values_nums = list(map(
+            lambda ix: (ix[0] if isinstance(ix[0], int) else ix[1]),
+            enumerate(x_values)))
         
-        x_step = abs(x_values[0] - x_values[1])
+        x_step = abs(x_values_nums[0] - x_values_nums[1])
         (x_offset, relative_width) = self.relativise(style, styles, x_step)
-        x_values_shiffted = list(map(lambda x: (x + x_offset), x_values))
+        x_values_shiffted = list(map(lambda x: (x + x_offset), x_values_nums))
         
         plt.bar(x_values_shiffted, values, relative_width, \
              label = name, \

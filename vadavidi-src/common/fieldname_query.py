@@ -4,7 +4,8 @@ from dataclasses import dataclass
 
 from outport_data.base_query import EntryExpression, \
     BaseExpressionNativeRenderer
-from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier
+from outport_data.default_querier import DefaultQuerier
+from outport_data.sqllite_querier import SQLLiteQuerier
 
 
 ################################################################################
