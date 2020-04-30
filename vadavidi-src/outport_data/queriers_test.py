@@ -11,7 +11,8 @@ from common.fieldname_query import FieldRefExpression, FieldRefNativeRenderer
 from common.sqlite_db import SQL_LITE_POOL
 from outport_data.base_queriers import Query
 from outport_data.base_query import ExpressionRenderers
-from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier, COMPUTED
+from outport_data.default_querier import DefaultQuerier, COMPUTED
+from outport_data.sqllite_querier import SQLLiteQuerier
 
 
 ################################################################################

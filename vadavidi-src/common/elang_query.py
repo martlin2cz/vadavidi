@@ -10,7 +10,8 @@ from typing import List, Any
 from common.datas import Schema
 from outport_data.base_query import EntryExpression, \
     BaseExpressionNativeRenderer
-from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier
+from outport_data.default_querier import DefaultQuerier
+from outport_data.sqllite_querier import SQLLiteQuerier
 
 
 ################################################################################
@@ -124,4 +125,4 @@ if __name__ == '__main__':
     
     renderer = ELangNativeRenderer()
     print(renderer.to_python_native(xle, "eee"))
-    print(renderer.to_sqllite_native(xle, "eee"))
+    print(renderer.to_sqllite_native(xle, "taaaable", {"karel": "mama"}))
