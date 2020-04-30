@@ -1,10 +1,7 @@
 """
 The implementations of the queriers.
 """
-from common.sqlite_db import SQLLite, SQL_LITE_POOL
-
 ################################################################################
-
 """
 The source indicating that the source of the entry is computation and not actual 
 input data
@@ -14,8 +11,9 @@ import math
 
 from common.datas import Schema, Entry, Table, ID, SOURCE
 from common.datas_util import  RowsMutableTable, ColsMutableTable, DatasUtil
-from outport_data.base_queriers import BaseQuerier, BaseExpressionNativeRenderer, \
-    Query
+from common.sqlite_db import SQLLite, SQL_LITE_POOL
+from outport_data.base_queriers import BaseQuerier
+from outport_data.base_query import BaseExpressionNativeRenderer, Query
 
 
 COMPUTED = "(Computed)"
@@ -160,8 +158,8 @@ class DefaultQuerier(BaseQuerier):
         schema = self.schema_of_agregated(groupped.schema, groups)
         result = RowsMutableTable(schema)
         
-        for entry in groupped:
-            new_entry = self.compute_agregated_entry(schema, entry, groups)
+        for ordernum, entry in enumerate(groupped):
+            new_entry = self.compute_agregated_entry(schema, ordernum, entry, groups)
             result += new_entry
 
         return result.to_table()
@@ -173,16 +171,22 @@ class DefaultQuerier(BaseQuerier):
             schema))
         return Schema(fields)
     
-    def compute_agregated_entry(self, schema, entry, groups):
+    def compute_agregated_entry(self, schema, ordernum, entry, groups):
         values = dict(map(lambda fn: \
-            (fn, self.compute_agregated_value(fn, entry[fn], groups)),
+            (fn, self.compute_agregated_value(fn, entry[fn], ordernum, groups)),
             schema))
     
         return Entry.create(schema, values)
     
-    def compute_agregated_value(self, field_name, field_value, groups):
+    def compute_agregated_value(self, field_name, field_value, ordernum, groups):
         if field_name not in groups.keys():
             return field_value
+
+        if field_name is ID:
+            return ordernum
+        
+        if field_name is SOURCE:
+            return COMPUTED
         
         agregator = groups[field_name]
         if agregator is None:
@@ -344,6 +348,7 @@ class SQLLiteQuerier(BaseQuerier):
 
         sqll = SQL_LITE_POOL.get(dataset_name)
         new_schema = self.create_schema(query.values_map)
+        
         metas_generate = self.metas_generate(query.values_map, query.groups_map)
         return sqll.load_better(new_schema, metas_generate, fields, where, group, having, order)
 
@@ -356,13 +361,14 @@ class SQLLiteQuerier(BaseQuerier):
         
     def metas_generate(self, values_map, groups_map):
         values_names = values_map.keys()
-        grouppers_names = BaseQuerier.create_grouppers_names(groups_map)
-
         if (ID not in values_names) or (SOURCE not in values_names):
             return True
         
-        if (ID in grouppers_names) or (SOURCE in grouppers_names):
-            return True
+        if (groups_map):
+            grouppers_names = BaseQuerier.create_grouppers_names(groups_map)
+            
+            if (ID in grouppers_names) or (SOURCE in grouppers_names):
+                return True
         
         return False
         
@@ -380,14 +386,18 @@ class SQLLiteQuerier(BaseQuerier):
             table_name = SQLLite.table_name(dataset_name)
             return self.renderer.to_native(condition_expr, self, table_name, None)
         else:
-            return self.renderer.to_native(condition_expr, self, None, values_map)
+            values_map_str = self.render_values(dataset_name, values_map)
+            return self.renderer.to_native(condition_expr, self, None, values_map_str)
 
+
+    def render_values(self, dataset_name, values_map):
+        return self.generate_fields(dataset_name, values_map, None)
 ################################################################################
 
     def generate_fields(self, dataset_name, values_map, groups_map):
         return dict(map(lambda vn: \
-            (vn, self.generate_field(dataset_name, vn, 
-                                     values_map[vn], groups_map[vn])),
+            (vn, self.generate_field(dataset_name, vn, values_map[vn], \
+                         groups_map[vn] if groups_map else None)),
             values_map.keys()))
 
     def generate_field(self, dataset_name, value_name, value_expr, agregator):

@@ -8,7 +8,7 @@ import re
 from typing import List, Any
 
 from common.datas import Schema
-from outport_data.base_queriers import EntryExpression, \
+from outport_data.base_query import EntryExpression, \
     BaseExpressionNativeRenderer
 from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier
 
@@ -40,6 +40,11 @@ class ELangFieldReference:
 ################################################################################
 class ELangNativeRenderer(BaseExpressionNativeRenderer):
     """ The expression native renderer for the elang expressions """
+    
+    def supports(self, expression, querier):
+        return isinstance(expression, ELangExpression) \
+               and (isinstance(querier, DefaultQuerier) \
+                or isinstance(querier, SQLLiteQuerier)) 
     
     def to_native(self, expression, querier, dataset_identifier, entry_identifier):
         if not isinstance(expression, ELangExpression):
@@ -74,7 +79,7 @@ class ELangNativeRenderer(BaseExpressionNativeRenderer):
             return "{0}.{1}".format(dataset_identifier, field_name)
         elif entry_expressions:
             field_expression = entry_expressions[field_name]
-            return self.to_sqllite_native(field_expression, None, None)
+            return field_expression
         else:
             return field_name
         
@@ -85,6 +90,7 @@ class ELangParser:
     def parse(self, schema, expr):
         """ Parses the expression """
         
+        # TODO make it to not to use spaces
         tokens = re.split("\\s+", expr)
         result = []
         for token in tokens:

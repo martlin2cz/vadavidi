@@ -5,12 +5,13 @@ import unittest
 
 from common.datas import Schema, Entry, ID, SOURCE
 from common.datas_util import RowsMutableTable, DatasUtil
-from common.elang import ELangNativeRenderer, ELangExpression, \
+from common.elang_query import ELangNativeRenderer, ELangExpression, \
     ELangFieldReference, ELangParser
-from outport_data.base_queriers import AggregatingExpression
-from outport_data.base_queriers import Query
-from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier, COMPUTED
+from common.fieldname_query import FieldRefExpression, FieldRefNativeRenderer
 from common.sqlite_db import SQL_LITE_POOL
+from outport_data.base_queriers import Query
+from outport_data.base_query import ExpressionRenderers
+from outport_data.queriers_impls import DefaultQuerier, SQLLiteQuerier, COMPUTED
 
 
 ################################################################################
@@ -19,7 +20,7 @@ class QueriersTest(unittest.TestCase):
     elang = ELangParser()
     dataset_name = "/tmp/testing_queriers"
     
-    def _test_DefaultQuerier_filter(self):
+    def test_DefaultQuerier_filter(self):
         print("=== DefaultQuerier filter")
         expr = self.e("( €baz in ('YES', 'NO') ) and ( €bar < 50 )")
         
@@ -31,7 +32,7 @@ class QueriersTest(unittest.TestCase):
         filtered = querier.filter(table, expr)
         filtered.printit()
     
-    def _test_DefaultQuerier_compute(self):
+    def test_DefaultQuerier_compute(self):
         print("=== DefaultQuerier compute")
         values_map = { "foo/baz": self.e("€foo + '/' + €baz"),
                        "2 x bar": self.e("2 * €bar")}
@@ -44,7 +45,7 @@ class QueriersTest(unittest.TestCase):
         computed = querier.compute(table, values_map)
         computed.printit()
         
-    def _test_DefaultQuerier_group(self):
+    def test_DefaultQuerier_group(self):
         print("=== DefaultQuerier group")
         grouppers_map = { "foo": None, "baz": None, ID: "...", SOURCE: "...", "baz": "..." }
         
@@ -55,7 +56,7 @@ class QueriersTest(unittest.TestCase):
         computed = querier.group(table, grouppers_map)
         computed.printit()
 
-    def _test_DefaultQuerier_agregate(self):
+    def test_DefaultQuerier_agregate(self):
         print("=== DefaultQuerier agregate")
         grouppers_map = {ID: "avg", SOURCE: "count", "foo": None, "bar": "count", "baz": None }
         
@@ -67,7 +68,7 @@ class QueriersTest(unittest.TestCase):
         computed = querier.agregate(groupped, grouppers_map)
         computed.printit()
 
-    def _test_DefaultQuerier_order(self):
+    def test_DefaultQuerier_order(self):
         print("=== DefaultQuerier order")
         order_by = [SOURCE, "baz"]
         
@@ -79,14 +80,14 @@ class QueriersTest(unittest.TestCase):
         filtered.printit()
 ################################################################################
 
-    def test_DefaultQuerier(self):
+    def test_DefaultQuerier_full(self):
         print("=== DefaultQuerier")
         before_values_filter = self.e("€" + ID + " < 7")
         values_map = {"fof": self.e("€foo [0]"), \
                       "lbaz": self.e("€baz . lower()"), \
                       "bardiv": self.e("€bar / 10")}
         after_values_filter = self.e("€bardiv < 8")
-        groups_map = {ID: "avg", SOURCE: "count", "fof": None, "lbaz": None,  "bardiv": "max" }
+        groups_map = {ID: "", SOURCE: "", "fof": None, "lbaz": None,  "bardiv": "max" }
         after_groupped_filter = self.e("€bardiv < 6")
         order_by = ["fof", "lbaz"]
          
@@ -102,7 +103,7 @@ class QueriersTest(unittest.TestCase):
         result.printit()
         
         
-    def test_SQLLiteQuerier(self):
+    def test_SQLLiteQuerier_full(self):
         print("=== SQLLiteQuerier")
         self.try_create_db_table()
         
@@ -112,7 +113,7 @@ class QueriersTest(unittest.TestCase):
                       "lbaz": self.e("LOWER( €baz )"), \
                       "bardiv": self.e("€bar / 10")}
         after_values_filter = self.e("€bardiv < 8")
-        groups_map = {ID: "AVG", SOURCE: "COUNT", "fof": None, "lbaz": None,  "bardiv": "MAX" } #FIXME ID and SOURCE aggregator has no sense
+        groups_map = {ID: "", SOURCE: "", "fof": None, "lbaz": None,  "bardiv": "MAX" } #FIXME ID and SOURCE aggregator has no sense
         after_groupped_filter = self.e("€bardiv < 6")
         order_by = ["fof", "lbaz"]
          
@@ -126,7 +127,51 @@ class QueriersTest(unittest.TestCase):
         result = querier.query(self.dataset_name, table, query)
         result.printit()
 
+################################################################################
 
+    def test_DefaultQuerier_common(self):
+        print("=== DefaultQuerier")
+        values_map = {"fooo": self.fn("foo"), \
+                      "bazl": self.e("€baz . lower()"), \
+                      "just_bar": self.fn("bar")}
+        after_values_filter = self.e("€just_bar < 70")
+        order_by = ["just_bar"]
+         
+        query = Query(None, values_map, after_values_filter, \
+                      None, None, order_by)
+        
+        querier = DefaultQuerier()
+        renderers = [ELangNativeRenderer(), FieldRefNativeRenderer()]
+        querier.renderer = ExpressionRenderers(renderers)
+        
+        table = self.create_table()
+        table.printit()
+        
+        result = querier.query(self.dataset_name, table, query)
+        result.printit()
+        
+        
+    def test_SQLLiteQuerier_common(self):
+        print("=== SQLLiteQuerier")
+        self.try_create_db_table()
+        
+        values_map = {"fooo": self.fn("foo"), \
+                      "bazl": self.e("LOWER ( €baz )"), \
+                      "just_bar": self.fn("bar")}
+        after_values_filter = self.e("€just_bar < 70")
+        order_by = ["just_bar"]
+         
+        query = Query(None, values_map, after_values_filter, \
+                      None, None, order_by)
+        
+        
+        querier = SQLLiteQuerier()
+        renderers = [ELangNativeRenderer(), FieldRefNativeRenderer()]
+        querier.renderer = ExpressionRenderers(renderers)
+        
+        table = DatasUtil.empty_table(self.schema) #FIXME avoid such
+        result = querier.query(self.dataset_name, table, query)
+        result.printit()
 
 ################################################################################
 
@@ -168,13 +213,19 @@ class QueriersTest(unittest.TestCase):
 
 
 ################################################################################
-
+    def fn(self, field_name):
+        return FieldRefExpression(field_name)
+    
     def e(self, elang_str):
         xschema = self.schema
         xschema = DatasUtil.add_to_schema(xschema, "fof", COMPUTED)
         xschema = DatasUtil.add_to_schema(xschema, "lbaz", COMPUTED)
         xschema = DatasUtil.add_to_schema(xschema, "bardiv", COMPUTED)
             
+        xschema = DatasUtil.add_to_schema(xschema, "fooo", COMPUTED)
+        xschema = DatasUtil.add_to_schema(xschema, "just_bar", COMPUTED)
+        xschema = DatasUtil.add_to_schema(xschema, "bazl", COMPUTED)
+       
         return self.elang.parse(xschema, elang_str)
     
     
