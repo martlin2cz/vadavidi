@@ -1,78 +1,82 @@
 # the module for the impls of the converters
 
-from typing import Mapping
-from datas import Schema, Entry, Table
-from base_converters import ValuesConvertingConverter, ValueConverter
-from parse import parse
 from datetime import datetime
+from typing import Mapping
+
+from parse import  *
+
+from import_data.base_converters import ValueConverter, \
+	ValuesConvertingConverter
+
 
 ########################################################################
-# The default value converter. Supports only "str" and "int" types
+# 
 class DefaultValueConverter(ValueConverter):
-
-	# converts value of field in given context entry
-	def convertValue(self, rawEntry, fieldName, fieldType, rawValue):
-		if fieldType in ("str", "string"):
-			return rawValue
+	""" The default value converter. Supports only str/string, 
+	int/integer, float/decimal and bool/boolean types. """
+	
+	def convert_value(self, raw_entry, field_name, field_type, raw_value):
+		if field_type in ("str", "string"):
+			return raw_value
 			
-		if fieldType in ("int", "integer"):
-			return int(rawValue)
+		if field_type in ("int", "integer"):
+			return int(raw_value)
 			
-		if fieldType in ("float", "decimal"):
-			return float(rawValue)	
+		if field_type in ("float", "decimal"):
+			return float(raw_value)	
 		
-		if fieldType in ("bool", "boolean"):
-			return rawValue == "true"
+		if field_type in ("bool", "boolean"):
+			return raw_value == "true"
 				
 		raise ValueError("Unsupported field '{0}' of type '{1}' with value '{2}'" \
-				.format(fieldName, fieldType, rawValue))
+				.format(field_name, field_type, raw_value))
 		
 ########################################################################
-# Converter by using python parser
 class FormattedParserValueConverter(ValueConverter):
-	# the format of the value
-	formatOf: str 
-	# which value to pick
-	pickWhich: int = 0
+	""" Converter by using python parser. """
 	
-	# converts value of field in given context entry
-	def convertValue(self, rawEntry, fieldName, fieldType, rawValue):
-		result = parse(self.formatOf, rawValue)
+	# the format of the value
+	format: str 
+	# which value to pick
+	pick_which: int = 0
+	
+	def convert_value(self, raw_entry, field_name, field_type, raw_value):
+		result = parse(self.format, raw_value)
 		if result == None:
 			raise ValueError("No such match")
 			
-		return result[self.pickWhich]
+		return result[self.pick_which]
 
 ########################################################################
-# Converter of date and/or time with cusomt format
 class DatetimeValueConverter(ValueConverter):
+	""" Converter of date and/or time with cusomt format. """
 	# the format of the date/time value
-	formatOf: str 
+	format: str 
 	
 	# converts value of field in given context entry
-	def convertValue(self, rawEntry, fieldName, fieldType, rawValue):
-		return datetime.strptime(rawValue, self.formatOf)
-
+	def convert_value(self, raw_entry, field_name, field_type, raw_value):
+		return datetime.strptime(raw_value, self.format)
 
 ########################################################################
-# Converter using value converters based on field name or type
 class DefaultValuesConvertingConverter(ValuesConvertingConverter):
+	""" Converter using value converters based on field name or type. """
+	
 	# the converters of field types
-	convertersOfTypes: Mapping[str, ValueConverter] = {}
+	converters_of_types: Mapping[str, ValueConverter] = {}
 	# the converters if field names
-	convertersOfFields: Mapping[str, ValueConverter] = {}
+	converters_of_fields: Mapping[str, ValueConverter] = {}
 	# the default, fail-throught converter
-	defaultConverter: ValueConverter = DefaultValueConverter()
+	default_converter: ValueConverter = DefaultValueConverter()
 	
 	# finds the particular converter
-	def pickTheValueConverter(self, schema, fieldName, fieldType):
-		if fieldType in self.convertersOfTypes.keys():
-			return self.convertersOfTypes[fieldType]
+	def pick_the_value_converter(self, schema, field_name, field_type):
+		if field_type in self.converters_of_types.keys():
+			return self.converters_of_types[field_type]
 			
-		if fieldType in self.convertersOfTypes.keys():
-			return self.convertersOfTypes[fieldType]
+		if field_type in self.converters_of_types.keys():
+			return self.converters_of_types[field_type]
 			
-		return self.defaultConverter
+		return self.default_converter
 
 
 ########################################################################	
