@@ -1,0 +1,5 @@
+!!python/object:config.object_schemater_impl.SchematerModel
+objects:
+  SimpleCSVParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseParser
+    fields:

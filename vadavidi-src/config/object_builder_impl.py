@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from docutils.nodes import field_name
 from typing import Mapping, Any, Deque
 
+from config.base_objecter import BaseObjectBuilder
+
 
 ################################################################################
 @dataclass
@@ -56,7 +58,7 @@ class DictItemEntry:
         raise ValueError("The dict item has already key and value")
 
 ################################################################################
-class DefaultObjectBuilder:
+class DefaultObjectBuilder(BaseObjectBuilder):
     """ The implementation of the object builder """
     
     object: AutomatedObjectEntry

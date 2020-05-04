@@ -6,7 +6,9 @@ import unittest
 from common.test_utils import TestUtils
 from config.object_builder_impl import DefaultObjectBuilder
 from config.object_schemater_impl import DefaultObjectSchemater, \
-    SchematerObjectModel, SchematerModel
+    SchematerObjectModel, SchematerModel, \
+    IMPORTER_SCHEMATER_FILE
+from config.object_schemater_producer import DefaultSchematerProducer
 from config.value_obtainers_impls import SimpleValuePrompter
 
 
@@ -16,6 +18,8 @@ class TestObjecter(unittest.TestCase):
 ################################################################################
 
     def test_simple_builder_collect(self):
+        print(" === test_simple_builder_collect")
+        
         builder = DefaultObjectBuilder("LoremSimply")
         builder.add_field("foo").set_value(42)
         builder.add_field("bar").set_value(99)
@@ -40,6 +44,8 @@ class TestObjecter(unittest.TestCase):
         builder.printit()
         
     def test_collect_with_collections(self):
+        print(" === test_collect_with_collections")
+        
         builder = DefaultObjectBuilder("LoremCollections")
         builder.add_field("foo").set_value(42)
         
@@ -75,6 +81,8 @@ class TestObjecter(unittest.TestCase):
 
 ################################################################################
     def test_object_schemater(self):
+        print(" === test_object_schemater")
+        
         schemater = DefaultObjectSchemater()
         
         lorem = SchematerObjectModel("BaseCalc", { \
@@ -91,6 +99,36 @@ class TestObjecter(unittest.TestCase):
         print(schemater.list_impls("BaseCalc"))
         print(schemater.list_impls("BaseMath"))
         print(schemater.list_fields("LoremCalc"))
+        
+    def test_object_schemater_load(self):
+        print(" === test_object_schemater_load")
+        
+        file_name = TestUtils.test_file_name("first-model.yaml")
+        schemater = DefaultObjectSchemater.load(file_name)
+        print(schemater)
+
+    def test_common_schematers(self):
+        print(" === test_common_schematers")
+
+        print(DefaultObjectSchemater.load(IMPORTER_SCHEMATER_FILE))
+
+################################################################################
+    def test_schemater_producer(self):
+        print(" === test_schemater_producer")
+        
+        producer = DefaultSchematerProducer()
+        producer.lookup_package_names = ["import_data"]
+
+        #print("\n PKG:".join(map(str, producer.list_packages())))
+        #print("\n MOD:".join(map(str, producer.list_modules())))
+        #print("\n CLS:".join(list(map(str, producer.list_classes()))[slice(1, 10)]))
+
+        base_class = "BaseParser"
+        model = producer.generate_model(base_class)
+        print(model)
+        
+        DefaultSchematerProducer.save(model, "/tmp/model-of-parser.yaml")
+        
 
 ################################################################################
 if __name__ == "__main__":

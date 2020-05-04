@@ -1,0 +1,17 @@
+!!python/object:config.object_schemater_impl.SchematerModel
+objects:
+  DolorMath: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseMath
+    fields: {}
+  IpsumCalc: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseCalc
+    fields: {}
+  LoremCalc: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseCalc
+    fields:
+      length: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Length of that
+        type: int
+      lorem: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: The lorem value
+        type: str
