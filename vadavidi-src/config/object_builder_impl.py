@@ -1,5 +1,5 @@
 """
-The module responsible for the manipulating with the objects.
+Implements the object builder.
 """
 ################################################################################
 from collections import deque
@@ -56,8 +56,8 @@ class DictItemEntry:
         raise ValueError("The dict item has already key and value")
 
 ################################################################################
-class AutomatedObjectBuilder:
-    """ An builder of the objects. See the test to see how to use. """
+class DefaultObjectBuilder:
+    """ The implementation of the object builder """
     
     object: AutomatedObjectEntry
     stack: Deque[AutomatedObjectEntry] = {}

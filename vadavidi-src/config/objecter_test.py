@@ -3,14 +3,20 @@ The test module for the objecter.
 """
 import unittest
 
-from config.objecter import AutomatedObjectBuilder
+from common.test_utils import TestUtils
+from config.object_builder_impl import DefaultObjectBuilder
+from config.object_schemater_impl import DefaultObjectSchemater, \
+    SchematerObjectModel, SchematerModel
+from config.value_obtainers_impls import SimpleValuePrompter
 
 
 ################################################################################
 class TestObjecter(unittest.TestCase):
 
+################################################################################
+
     def test_simple_builder_collect(self):
-        builder = AutomatedObjectBuilder("LoremSimply")
+        builder = DefaultObjectBuilder("LoremSimply")
         builder.add_field("foo").set_value(42)
         builder.add_field("bar").set_value(99)
         
@@ -34,7 +40,7 @@ class TestObjecter(unittest.TestCase):
         builder.printit()
         
     def test_collect_with_collections(self):
-        builder = AutomatedObjectBuilder("LoremCollections")
+        builder = DefaultObjectBuilder("LoremCollections")
         builder.add_field("foo").set_value(42)
         
         builder.add_field("bar").new_list()
@@ -68,6 +74,23 @@ class TestObjecter(unittest.TestCase):
         builder.printit()
 
 ################################################################################
+    def test_object_schemater(self):
+        schemater = DefaultObjectSchemater()
+        
+        lorem = SchematerObjectModel("BaseCalc", { \
+                "lorem": SimpleValuePrompter("The lorem value", "str"), \
+                "length": SimpleValuePrompter("Length of that", "int") \
+            })
+        
+        ipsum = SchematerObjectModel("BaseCalc", { })
+        dolor = SchematerObjectModel("BaseMath", { })
+        
+        objects = {"LoremCalc": lorem, "IpsumCalc": ipsum, "DolorMath": dolor}
+        schemater.model = SchematerModel(objects)
+        
+        print(schemater.list_impls("BaseCalc"))
+        print(schemater.list_impls("BaseMath"))
+        print(schemater.list_fields("LoremCalc"))
 
 ################################################################################
 if __name__ == "__main__":
