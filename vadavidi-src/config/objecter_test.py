@@ -9,7 +9,9 @@ from config.object_schemater_impl import DefaultObjectSchemater, \
     SchematerObjectModel, SchematerModel, \
     IMPORTER_SCHEMATER_FILE
 from config.object_schemater_producer import DefaultSchematerProducer
-from config.value_obtainers_impls import SimpleValuePrompter
+from config.value_obtainers_impls import SimpleValuePrompter,\
+    ClassChoosePrompter
+from config.object_prompter import ObjectPrompter
 
 
 ################################################################################
@@ -17,7 +19,7 @@ class TestObjecter(unittest.TestCase):
 
 ################################################################################
 
-    def test_simple_builder_collect(self):
+    def _test_simple_builder_collect(self):
         print(" === test_simple_builder_collect")
         
         builder = DefaultObjectBuilder("LoremSimply")
@@ -43,7 +45,7 @@ class TestObjecter(unittest.TestCase):
         
         builder.printit()
         
-    def test_collect_with_collections(self):
+    def _test_collect_with_collections(self):
         print(" === test_collect_with_collections")
         
         builder = DefaultObjectBuilder("LoremCollections")
@@ -80,7 +82,7 @@ class TestObjecter(unittest.TestCase):
         builder.printit()
 
 ################################################################################
-    def test_object_schemater(self):
+    def _test_object_schemater(self):
         print(" === test_object_schemater")
         
         schemater = DefaultObjectSchemater()
@@ -100,20 +102,20 @@ class TestObjecter(unittest.TestCase):
         print(schemater.list_impls("BaseMath"))
         print(schemater.list_fields("LoremCalc"))
         
-    def test_object_schemater_load(self):
+    def _test_object_schemater_load(self):
         print(" === test_object_schemater_load")
         
         file_name = TestUtils.test_file_name("first-model.yaml")
         schemater = DefaultObjectSchemater.load(file_name)
         print(schemater)
 
-    def test_common_schematers(self):
+    def _test_common_schematers(self):
         print(" === test_common_schematers")
 
         print(DefaultObjectSchemater.load(IMPORTER_SCHEMATER_FILE))
 
 ################################################################################
-    def test_schemater_producer(self):
+    def _test_schemater_producer(self):
         print(" === test_schemater_producer")
         
         producer = DefaultSchematerProducer()
@@ -128,6 +130,32 @@ class TestObjecter(unittest.TestCase):
         print(model)
         
         DefaultSchematerProducer.save(model, "/tmp/model-of-parser.yaml")
+
+################################################################################
+
+    def test_object_prompter(self):
+        file_name = TestUtils.test_file_name("first-model.yaml")
+        schemater = DefaultObjectSchemater.load(file_name)
+        
+        clazz = "BaseCalc"
+        builder = DefaultObjectBuilder(clazz)
+        
+        prompter = ObjectPrompter(schemater, builder, clazz)
+        
+        num = 0;
+        while True:
+            prompt = prompter.to_next()
+            print("WILL PROMPT: " + str(prompt))
+            if prompt is None:
+                break
+            
+            if (isinstance(prompt, ClassChoosePrompter)):
+                impls = schemater.list_impls(prompt.clazz)
+                prompter.set_value(impls[-1])
+            else:
+                prompter.set_value(num)
+            
+            num += 1
         
 
 ################################################################################

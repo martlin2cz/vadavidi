@@ -24,6 +24,9 @@ class DefaultSchematerProducer:
     
     # the packages where to look for
     lookup_package_names: List[str]
+    
+ #   def __init__(self, lookup_package_names: List[str]):
+ #       self.lookup_package_names = lookup_package_names
 
     def load_package(self, pn):
         """ Loads the given package """

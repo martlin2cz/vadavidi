@@ -12,6 +12,16 @@ objects:
       length: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
         prompt_text: Length of that
         type: int
+      math: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
+        prompt_text: The instance of BaseMath
+        clazz: BaseMath
       lorem: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
         prompt_text: The lorem value
-        type: str
+        type: str        
+  SitMath: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseMath
+    fields:
+      pi: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Gimme pi
+        type: float
+        

@@ -100,6 +100,12 @@ class MultiFilesLoader(BaseLoader):
 	# the converters
 	converters: Mapping[BaseFileMatcher, BaseConverter]
 	
+	def __init__(self, files_names: List[str], \
+				parsers: Mapping[BaseFileMatcher, BaseParser], \
+				converters: Mapping[BaseFileMatcher, BaseConverter]):
+		#TODO 
+		pass
+	
 	def run(self, schema):			
 		table = DatasUtil.empty_table(schema)
 		for file_name in self.files_names:

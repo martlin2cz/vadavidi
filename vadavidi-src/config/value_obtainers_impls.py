@@ -4,6 +4,7 @@ The implementation of the ValueObtainers.
 from dataclasses import dataclass
 
 from config.base_objecter import BaseValueObtainer
+from typing import List, Mapping
 
 ################################################################################
 @dataclass
@@ -16,6 +17,22 @@ class SimpleValuePrompter(BaseValueObtainer):
     # the type of the prompted value
     type: str
     
+################################################################################
+@dataclass
+class ObjectConstructionPrompter(BaseValueObtainer):
+    """ The main prompter for the object construction. """
+    
+    clazz: str
+    prompt_text: str
+    
+################################################################################
+@dataclass
+class ClassChoosePrompter(BaseValueObtainer):
+    """ The obtainer which lets the user to choose the particular class. """
+
+    clazz: str
+    prompt_text: str
+
 ################################################################################
 @dataclass
 class ListPrompter(BaseValueObtainer):
