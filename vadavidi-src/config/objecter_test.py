@@ -22,7 +22,9 @@ class TestObjecter(unittest.TestCase):
     def _test_simple_builder_collect(self):
         print(" === test_simple_builder_collect")
         
-        builder = DefaultObjectBuilder("LoremSimply")
+        builder = DefaultObjectBuilder()
+        builder.new_object("LoremSimply")
+        
         builder.add_field("foo").set_value(42)
         builder.add_field("bar").set_value(99)
         
@@ -43,12 +45,15 @@ class TestObjecter(unittest.TestCase):
         
         builder.end_object()
         
+        builder.end_object()
         builder.printit()
         
     def _test_collect_with_collections(self):
         print(" === test_collect_with_collections")
         
-        builder = DefaultObjectBuilder("LoremCollections")
+        builder = DefaultObjectBuilder()
+        builder.new_object("LoremCollections")
+        
         builder.add_field("foo").set_value(42)
         
         builder.add_field("bar").new_list()
@@ -79,6 +84,7 @@ class TestObjecter(unittest.TestCase):
         
         builder.end_dict()
         
+        builder.end_object()
         builder.printit()
 
 ################################################################################
@@ -138,11 +144,12 @@ class TestObjecter(unittest.TestCase):
         schemater = DefaultObjectSchemater.load(file_name)
         
         clazz = "BaseCalc"
-        builder = DefaultObjectBuilder(clazz)
+        builder = DefaultObjectBuilder()
         
         prompter = ObjectPrompter(schemater, builder, clazz)
         
         num = 0;
+        
         while True:
             prompt = prompter.to_next()
             print("WILL PROMPT: " + str(prompt))
@@ -153,11 +160,14 @@ class TestObjecter(unittest.TestCase):
                 impls = schemater.list_impls(prompt.clazz)
                 prompter.set_value(impls[-1])
             else:
-                prompter.set_value(num)
+                if (num % 10) != 0:
+                    prompter.set_value(num)
+                else:
+                    prompter.set_value(None)
             
             num += 1
         
-
+        builder.printit()
 ################################################################################
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

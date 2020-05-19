@@ -21,7 +21,10 @@ objects:
   SitMath: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseMath
     fields:
-      pi: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme pi
-        type: float
+      pis: !!python/object:config.value_obtainers_impls.ListPrompter
+        prompt_text: Gimme pi values
+        item_prompter:        
+            pi: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+                prompt_text: Gimme pi
+                type: float
         

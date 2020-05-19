@@ -27,8 +27,8 @@ class BaseObjectSchemater(ABC):
 ################################################################################
 ################################################################################
 class BaseObjectBuilder(ABC):
-    """ The object builder. Starting with object entry, methods new_object, 
-    new_list and new_dict switches to new entry. Methods end_object, end_list 
+    """ The object builder. Methods new_object, new_list and new_dict switches 
+    to new entry (initial is no entry). Methods end_object, end_list 
     and end_dict respectivelly, returns to previous entry.
     
     When current entry is object, add_value is allowed and switches to field 

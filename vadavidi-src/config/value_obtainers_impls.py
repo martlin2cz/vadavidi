@@ -42,3 +42,15 @@ class ListPrompter(BaseValueObtainer):
     prompt_text: str
     # the obtainer for the particular items
     item_prompter: BaseValueObtainer
+    
+################################################################################
+@dataclass
+class DictPrompter(BaseValueObtainer):
+    """ The obtainer which need to get dict of values from the user. """
+
+    # the human readable prompt text
+    prompt_text: str
+    # the obtainer for the particular items keys
+    key_prompter: BaseValueObtainer
+    # the obtainer for the particular items values
+    value_prompter: BaseValueObtainer

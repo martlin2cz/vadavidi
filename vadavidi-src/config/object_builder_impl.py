@@ -64,14 +64,17 @@ class DefaultObjectBuilder(BaseObjectBuilder):
     object: AutomatedObjectEntry
     stack: Deque[AutomatedObjectEntry] = {}
     
-    def __init__(self, clazz):
-        self.object = AutomatedObjectEntry(clazz)
-        self.stack = deque([self.object])
+    def __init__(self):
+        self.object = None #AutomatedObjectEntry(clazz)
+        self.stack = deque()
     
     def _add_to_current(self, value):
         """ Adds the value to the current entry """
         
-        if self._is_current(AutomatedObjectEntry):
+        if (self._is_current(None)):
+            self._new_current(value)
+            
+        elif self._is_current(AutomatedObjectEntry):
             raise ValueError("First specify field name")
         
         elif self._is_current(DictItemEntry):
@@ -96,6 +99,9 @@ class DefaultObjectBuilder(BaseObjectBuilder):
     def _new_current(self, new_entry):
         """ Marks the given entry to be current """
         
+        if self.object is None:
+            self.object = new_entry
+        
         return self.stack.append(new_entry)
     
     def _rollback_current(self, expected_type):
@@ -106,8 +112,10 @@ class DefaultObjectBuilder(BaseObjectBuilder):
         
     def _current_entry(self):
         """ Returns the current entry """
-        
-        return self.stack[-1]
+        if len(self.stack) == 0:
+            return None
+        else:
+            return self.stack[-1]
     
     def _check_current(self, expected_type):
         """ Checks whether the current entry is of given type, fails if not """
@@ -121,7 +129,10 @@ class DefaultObjectBuilder(BaseObjectBuilder):
         """ Returns true if current entry is of given type """
         
         current = self._current_entry()
-        return isinstance(current, the_type)
+        if the_type is None:
+            return current is None
+        else:
+            return isinstance(current, the_type)
 
 ################################################################################
 
