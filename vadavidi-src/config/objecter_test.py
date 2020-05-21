@@ -139,33 +139,59 @@ class TestObjecter(unittest.TestCase):
 
 ################################################################################
 
-    def test_object_prompter(self):
-        file_name = TestUtils.test_file_name("first-model.yaml")
+    def test_first_object_prompter(self):
+        print(" === test_first_object_prompter")
+        self.run_object_prompter("first-model.yaml", "BaseCalc",
+         ["LoremCalc", \
+            11, "SitMath", \
+                    "ok, here are the pis", \
+                    3.14, 3.15, 3.16, \
+                    None, \
+            "Lorem ipsum" \
+            ])
+        
+    def test_second_object_prompter(self):
+        print(" === test_second_object_prompter")
+        self.run_object_prompter("second-model.yaml", "BaseOperation",
+         ["NaryOperation", \
+          "+", "okay, go on the list of operands", \
+            "AtomicValueOperation", \
+                "VariableAtom", \
+                    "x_0", \
+            "continue, want add more operands", \
+            "BinaryOperation", \
+                "*",\
+                    "AtomicValueOperation", \
+                        "ComplexNumberAtom", \
+                            0.9, \
+                            1.1, \
+                            None,#XXX
+                    "AtomicValueOperation", \
+                        "IntNumberAtom", \
+                            42, \
+            "and one more", \
+            "UnaryOperation", \
+                "~", \
+                    "AtomicValueOperation", \
+                        "IntNumberAtom", \
+                            1010, \
+            None \
+             ])
+        
+        
+    def run_object_prompter(self, schema_file_name, clazz, answers):
+        file_name = TestUtils.test_file_name(schema_file_name)
         schemater = DefaultObjectSchemater.load(file_name)
         
-        clazz = "BaseCalc"
         builder = DefaultObjectBuilder()
-        
         prompter = ObjectPrompter(schemater, builder, clazz)
         
-        num = 0;
-        
-        while True:
+        for answer in answers:
             prompt = prompter.to_next()
-            print("WILL PROMPT: " + str(prompt))
-            if prompt is None:
-                break
             
-            if (isinstance(prompt, ClassChoosePrompter)):
-                impls = schemater.list_impls(prompt.clazz)
-                prompter.set_value(impls[-1])
-            else:
-                if (num % 10) != 0:
-                    prompter.set_value(num)
-                else:
-                    prompter.set_value(None)
+            print("Prompting: " + str(prompt) + ", getting: " + str(answer)) #prompt.prompt_text
             
-            num += 1
+            prompter.set_value(answer)
         
         builder.printit()
 ################################################################################

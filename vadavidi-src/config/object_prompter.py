@@ -142,6 +142,9 @@ class ObjectPrompter():
 
     def to_next(self):
         cp = self.current_composite_prompter()
+        if cp is None:
+            return None
+        
         prompter = cp.current()
 
         self.prepare_builder_for(cp, prompter)        
@@ -200,14 +203,16 @@ class ObjectPrompter():
         elif isinstance(cp, ListCompositePrompter):
             if value is None:
                 self.finish_prompting_list()
-                return
+            
+            return
             
         elif isinstance(cp, DictCompositePrompter):
             if value is None:
                 self.finish_prompting_dict()
-                return
         
-        print("setting " + str(cp) + " to " + str(value))
+            return
+        
+        #print("setting " + str(cp) + " to " + str(value))
         self.builder.set_value(value)    
         
 ################################################################################
@@ -235,6 +240,8 @@ class ObjectPrompter():
             
             prompter = cp.next()
             if prompter is not None:
+                # FIXME if uncommented, works second sample, but not first
+                #self.prepare_builder_for(cp, prompter)
                 return prompter
 
     def pop_up_builder(self):
