@@ -2,7 +2,7 @@
 The test for the pitree module.
 """
 import unittest
-from config.pitree import PiTreePath, PiTree, PiTreeIterator
+from config.pitree import PiTreePath, PiTree, PiTreeIterator, SimpleOrderedBag
 
 ################################################################################
 class PitreeTest(unittest.TestCase):
@@ -28,6 +28,55 @@ class PitreeTest(unittest.TestCase):
         
         print("Sub? Yu: " + str(parent.is_subpath(first)))
         print("Sub? Yu: " + str(parent.is_subpath(child)))
+
+        print("Chi? Yu: " + str(parent.is_child(first)))
+        print("Chi? Nu: " + str(first.is_child(parent)))
+
+        print("Chi? Nu: " + str(parent.is_child(child)))
+        print("Chi? Nu: " + str(first.is_child(second)))
+
+
+################################################################################
+    def place_path_in(self, before, new, after):
+        if before is None:
+            return True
+        if after is None:
+            return True
+        
+        if len(before) < len(new):
+            return True
+                
+        if len(new) > len(after):
+            return False
+        
+        return new.last() < before.last()
+    
+        
+    def test_simple_ordered_bag(self):
+        print("=== TESTING SIMPLE ORDERED LIST")
+        
+        lst = SimpleOrderedBag(\
+            lambda b, n, a: b < n if b is not None else True)
+        lst.add(10)
+        lst.add(11)
+        lst.add(45)
+        lst.add(8)
+        lst.add(26)
+        print(lst)
+        
+        lst.remove(11)
+        lst.add(30)
+        print(lst)
+        
+        lst = SimpleOrderedBag(lambda b, n, a : self.place_path_in(b, n, a))
+            
+        lst.add(PiTreePath())
+        lst.add(PiTreePath("foo"))
+        lst.add(PiTreePath("bar"))
+        lst.add(PiTreePath("foo", "BAZ"))
+        lst.add(PiTreePath("foo", "AUX"))
+        lst.add(PiTreePath("bar", "QUX"))
+        print("\n".join(map(str, list(lst))))
         
 ################################################################################
     def test_tree(self):
@@ -66,7 +115,7 @@ class PitreeTest(unittest.TestCase):
         
         fobb = PiTreePath("foo", "bar", "BAZ")
         print("Readded:")
-        tree.add(fobb, "FAIL")
+        tree.add(fobb, 420)
         tree.printit()
 
 ################################################################################
@@ -79,10 +128,16 @@ class PitreeTest(unittest.TestCase):
         tree.add(PiTreePath(1, 2), "dolor")
         tree.add(PiTreePath(2), "sit")
         tree.add(PiTreePath(1, 3), "amet")
+        tree.add(PiTreePath(1, 2, 99), "karel")
+        tree.add(PiTreePath(1, 3, 101), "franta")
         
-        iter = PiTreeIterator(tree)
+        print("The tree:")
+        tree.printit()
+        
+        print("The iterator:")
+        triter = PiTreeIterator(tree)
         while True:
-            path = iter.next()
+            path = triter.next()
             print(path)
             if path is None:
                 break
