@@ -82,39 +82,31 @@ class PiTreePath:
 class SimpleOrderedBag:
     """ The simple set/bag which respects the ordering of the items. """
     
-    # function (item_before, new_item, item_after) => bool
-    place_in: Callable
+    # function (items, new_item) => item_to_add_after
+    add_after: Callable
     # the actual list of items
     items: List[Any]
     
-    def __init__(self, place_in, *items):
-        self.place_in = place_in
+    def __init__(self, add_after, *items):
+        self.add_after = add_after
         self.items = list()
         
         for item in items:
             self.add(item) 
             
-            
     ####################################################################
         
     def add(self, item):
-        #print("YUUUMY {0}".format(item))
+        add_after_item = self.add_after(self.items, item)
         
-        for i in range(-1, len(self.items)):
-            before = self.items[i] if i >= 0 else None
-            after = self.items[i+1] if i + 1 < len(self.items) else None
-            #print("Y {0} | {1} ? {2}".format(before, after, self.place_in(before, item, after)))
-            if self.place_in(before, item, after):
-                if i+1 < len(self.items):
-                    #print("HAAA inserting {0} at {1}".format(item, i+1))
-                    self.items.insert(i+1, item)
-                else:
-                    #print("HAAA appending {0} at E".format(item))
-                    self.items.append(item)
-                return
-         
-             
-        raise ValueError("Nowhere to put")
+        if add_after_item is None:
+            self.items.insert(0, item)
+        else:
+            index = self.items.index(add_after_item)
+            if (index + 1) < len(self.items):
+                self.items.insert(index + 1, item)
+            else:
+                self.items.append(item)
 
     
     def remove(self, item):
@@ -161,34 +153,47 @@ class PiTree:
     nodes: Mapping[PiTreePath, Any]
 
     def __init__(self, nodes = dict()):
-        """ Creates the empty tree """
+        """ Creates the tree """
         
-        self.paths = SimpleOrderedBag(lambda b, n, a : self.place_in(b, n, a))
+        self.paths = SimpleOrderedBag(lambda its, ni : self.add_after(its, ni))
         self.nodes = dict()
         
         for p,v in nodes.items():
             self.add(p, v)
     
-    def place_in(self, before, new, after):
-        if before is None:
-            if after is None:
-                return True
-            else:
-                return False
-            
-        if after is None:
-            return True
-       
+    def add_after(self, items, item):
+        if len(items) == 0:
+            return None
         
-       
+        parent = item.parent()
+        siblings = self.subpaths(parent)
+        #print("S {0} of {1}".format(siblings, item))
+        if len(siblings) > 0:
+            return siblings[-1]
+        else:
+            return parent
+        
+        #if parent.is_root():
+        #    return None
+        # 
+        #grandpa = parent.parent()
+        #cousins = self.subpaths(grandpa)
+        #print("C {0} of {1}".format(cousins, item))
+        #if len(cousins) > 0:
+        #    return cousins[-1]
+        #    
+        #if grandpa.is_root():
+        #    return None
+        #    
+        #return None
        
         
         #if not (before.is_root() or after.is_root() or new.is_root()):
         #    if (before.parent() is new.parent()) and(new.parent() is not after.parent()):
         #        return True
         #     
-        if before.is_child(after):
-            return False
+        #if before.is_child(after):
+         #   return False
         
         #if not (before.is_root() or after.is_root() or new.is_root()):
         #    bfr_prdc = before.common_predcestor(new)

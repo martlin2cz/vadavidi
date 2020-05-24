@@ -3,6 +3,7 @@ The test for the pitree module.
 """
 import unittest
 from config.pitree import PiTreePath, PiTree, PiTreeIterator, SimpleOrderedBag
+from functools import reduce
 
 ################################################################################
 class PitreeTest(unittest.TestCase):
@@ -37,26 +38,26 @@ class PitreeTest(unittest.TestCase):
 
 
 ################################################################################
-    def place_path_in(self, before, new, after):
-        if before is None:
-            return True
-        if after is None:
-            return True
+    def place_path_in(self, items, item):
+        if item.is_root():
+            return None
+        else:
+            return item.parent()
         
-        if len(before) < len(new):
-            return True
-                
-        if len(new) > len(after):
-            return False
+    def place_int_after(self, items, item):
+        if len(items) == 0:
+            return None
         
-        return new.last() < before.last()
-    
+        if item < items[0]:
+            return None
+
+        before = reduce(lambda ai, ci : (ci if ci < item else ai), items)
+        return before
         
     def test_simple_ordered_bag(self):
-        print("=== TESTING SIMPLE ORDERED LIST")
+        print("=== TESTING SIMPLE ORDERED BAG")
         
-        lst = SimpleOrderedBag(\
-            lambda b, n, a: b < n if b is not None else True)
+        lst = SimpleOrderedBag(lambda its, ni: self.place_int_after(its, ni))
         lst.add(10)
         lst.add(11)
         lst.add(45)
@@ -68,7 +69,7 @@ class PitreeTest(unittest.TestCase):
         lst.add(30)
         print(lst)
         
-        lst = SimpleOrderedBag(lambda b, n, a : self.place_path_in(b, n, a))
+        lst = SimpleOrderedBag(lambda its, ni: self.place_path_in(its, ni))
             
         lst.add(PiTreePath())
         lst.add(PiTreePath("foo"))
@@ -89,7 +90,6 @@ class PitreeTest(unittest.TestCase):
         aux = PiTreePath("foo", "aux")
         qux = PiTreePath("foo", "aux", "qux")
         quux = PiTreePath("foo", "aux", "qux", "quux")
-        
         
         tree = PiTree()
         print("New tree:")
@@ -129,7 +129,10 @@ class PitreeTest(unittest.TestCase):
         tree.add(PiTreePath(2), "sit")
         tree.add(PiTreePath(1, 3), "amet")
         tree.add(PiTreePath(1, 2, 99), "karel")
-        tree.add(PiTreePath(1, 3, 101), "franta")
+        tree.add(PiTreePath(1, 4), "franta")
+        tree.add(PiTreePath(1, 2, 88), "pepa")
+        tree.add(PiTreePath(1, 3, -1), "lojza")
+        tree.add(PiTreePath(1, 2, 77), "jirka")
         
         print("The tree:")
         tree.printit()
