@@ -7,7 +7,16 @@ from config.base_objecter import BaseObjectPrompter, BaseValueObtainer,\
 from typing import Any
 from config.value_obtainers_impls import ClassChoosePrompter, ListPrompter,\
     DictPrompter
-import getpass
+from dataclasses import dataclass
+
+################################################################################
+@dataclass
+class AddMorePrompter(BaseValueObtainer):
+    prompt_text: str = "Do you want to add more?"
+
+################################################################################
+class DictTuplePrompter(BaseValueObtainer):
+    prompt_text: str = "Will now ask for the key and then value, ok?"
 
 ################################################################################
 class OpiTreeValueNode:
@@ -43,6 +52,9 @@ class OpiTreeValueNode:
 #         node = self.tree.get(path)
 #         node.value = value
 #===============================================================================
+
+
+
 
 ################################################################################
 class PiTreeObjectPrompter(BaseObjectPrompter):
@@ -92,9 +104,9 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
         current_node = self.tree.get(current_path)
         current_prompter = current_node.prompter
         
-        if value is NO_VALUE:
-            return
-        elif isinstance(current_prompter, ClassChoosePrompter):
+        #if isinstance(current_prompter, AddMorePrompter):
+        #    return
+        if isinstance(current_prompter, ClassChoosePrompter):
             self.set_current_value(value)
             self.push_choosen_class_fields(current_path, value)
             
@@ -109,6 +121,9 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
             
     def handle_specific_parent(self, value):
         current_path = self.pti.current()
+        current_node = self.tree.get(current_path)
+        current_prompter = current_node.prompter
+        
         parent_path = current_path.parent()
         if parent_path.is_root():
             return
@@ -117,11 +132,11 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
         parent_prompter = parent_node.prompter
         
         if isinstance(parent_prompter, ListPrompter):
-            if value is not NO_VALUE:
+            if isinstance(current_prompter, AddMorePrompter) and value:
                 self.push_list_item_prompter(parent_path)
             
         if isinstance(parent_prompter, DictPrompter):
-            if value is not NO_VALUE:
+            if isinstance(current_prompter, AddMorePrompter) and value:
                 self.push_dict_item_prompter(parent_path)
            
     ################################################
@@ -134,23 +149,25 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
         
         self.push_prompter(list_prompter_path, key, item_prompter)
         
+        add_more_prompter = AddMorePrompter()
+        self.push_prompter(list_prompter_path, key + 1, add_more_prompter)
+        
+        
     def push_dict_item_prompter(self, dict_prompter_path):
         dict_node = self.tree.get(dict_prompter_path)
         dict_prompter = dict_node.prompter
-        
+
         size = self.size_of_subtree(dict_prompter_path)
-        is_odd =  size % 2 == 0
-        new_key_num = int(size / 2)
-                
-        item_prompter = dict_prompter.key_prompter \
-                if  is_odd\
-                else dict_prompter.value_prompter
         
-        key = ("key-" + str(new_key_num)) \
-                if  is_odd \
-                else ("value-" + str(new_key_num))
+        tuple_prompter = DictTuplePrompter()
+        self.push_prompter(dict_prompter_path, size, tuple_prompter)
         
-        self.push_prompter(dict_prompter_path, key, item_prompter)
+        dict_item_path = dict_prompter_path.child(size)
+        self.push_prompter(dict_item_path, "key", dict_prompter.key_prompter)
+        self.push_prompter(dict_item_path, "value", dict_prompter.value_prompter)
+        
+        add_more_prompter = AddMorePrompter()
+        self.push_prompter(dict_prompter_path, size + 1, add_more_prompter)
 
     
     def push_choosen_class_fields(self, object_prompter_path, clazz):

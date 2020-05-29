@@ -24,8 +24,7 @@ class TestPiTreeObjecter(unittest.TestCase):
          ["LoremCalc", \
             11, "SitMath", \
                     "ok, here are the pis", \
-                    3.14, 3.15, 3.16, \
-                    NO_VALUE, \
+                    3.14, True, 3.15, True, 3.16, False, \
             "Lorem ipsum" \
             ])
         
@@ -37,7 +36,7 @@ class TestPiTreeObjecter(unittest.TestCase):
             "AtomicValueOperation", \
                 "VariableAtom", \
                     "x_0", \
-            #"continue, want add more operands", \
+            True, #"continue, want add more operands", \
             "BinaryOperation", \
                 "*",\
                     "AtomicValueOperation", \
@@ -47,25 +46,28 @@ class TestPiTreeObjecter(unittest.TestCase):
                     "AtomicValueOperation", \
                         "IntNumberAtom", \
                             42, \
-            #"and one more", \
+            True, #"and one more", \
             "UnaryOperation", \
                 "~", \
                     "AtomicValueOperation", \
                         "IntNumberAtom", \
                             1010, \
+            True, # okay, the last one
             "PolynomOperation", \
                 "okay, telling the cooeficients", \
-                "VariableAtom", \
-                    "x_0", \
-                3, \
-                "IntNumberAtom", \
-                    4, \
-                2, \
-                "FloatNumberAtom", \
-                    0.9, \
+                "ok, will specify first coef", \
+                    "VariableAtom", "x_0", \
+                    3, \
+                True, #next!
+                "ok, will specify second coef", \
+                    "IntNumberAtom", 4, \
+                    2, \
+                True, #next!
+                "ok, will specify last coef", \
+                "FloatNumberAtom", 0.9, \
                 1, \
-                NO_VALUE,    
-            NO_VALUE \
+                False, #ok, done
+            False, #and we are done
              ])
         
         
