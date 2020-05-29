@@ -77,8 +77,6 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
         if not self.pti.has_next():
             return NO_VALUE
         
-        #self.handle_specific_next()
-        
         next_path = self.pti.next()
         next_node = self.tree.get(next_path)
         return next_node.prompter
@@ -89,27 +87,6 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
 
 
     ################################################
-    # deprected
-    def xxx_handle_specific_next(self):
-        current_path = self.pti.current()
-        parent_path = current_path.parent()
-        parent_node = self.tree.get(parent_path)
-        parent_prompter = parent_node.prompter
-        
-        if isinstance(parent_prompter, ListPrompter):
-            value_prompter = parent_prompter.item_prompter
-            key = self.size_of_subtree(current_path) + 1
-            self.push_prompter(key, value_prompter)
-            
-        elif isinstance(parent_prompter, DictPrompter):
-            value_prompter = parent_prompter.key_prompter
-            new_key_num = self.size_of_subtree(current_path) + 1 
-            key = ("key-" + str(new_key_num)) \
-                    if new_key_num % 2 == 0 \
-                    else ("value-" + str(new_key_num))
-            self.push_prompter(key, value_prompter)
-        
-    
     def handle_current(self, value):
         current_path = self.pti.current()
         current_node = self.tree.get(current_path)
@@ -118,6 +95,7 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
         if value is NO_VALUE:
             return
         elif isinstance(current_prompter, ClassChoosePrompter):
+            self.set_current_value(value)
             self.push_choosen_class_fields(current_path, value)
             
         elif isinstance(current_prompter, ListPrompter):
@@ -146,15 +124,13 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
             if value is not NO_VALUE:
                 self.push_dict_item_prompter(parent_path)
            
- 
-
     ################################################
     def push_list_item_prompter(self, list_prompter_path):
         list_node = self.tree.get(list_prompter_path)
         list_prompter = list_node.prompter
         
         item_prompter = list_prompter.item_prompter
-        key = self.size_of_subtree(list_prompter_path) + 1
+        key = self.size_of_subtree(list_prompter_path)
         
         self.push_prompter(list_prompter_path, key, item_prompter)
         
@@ -162,15 +138,16 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
         dict_node = self.tree.get(dict_prompter_path)
         dict_prompter = dict_node.prompter
         
-        new_key_num = self.size_of_subtree(dict_prompter_path) + 1
-        is_even =  new_key_num % 2 == 0
+        size = self.size_of_subtree(dict_prompter_path)
+        is_odd =  size % 2 == 0
+        new_key_num = int(size / 2)
                 
         item_prompter = dict_prompter.key_prompter \
-                if  is_even\
+                if  is_odd\
                 else dict_prompter.value_prompter
         
         key = ("key-" + str(new_key_num)) \
-                if  is_even \
+                if  is_odd \
                 else ("value-" + str(new_key_num))
         
         self.push_prompter(dict_prompter_path, key, item_prompter)
@@ -193,8 +170,8 @@ class PiTreeObjectPrompter(BaseObjectPrompter):
         current_node.value = value
     
     def size_of_subtree(self, path):
-        subpaths = self.tree.subpaths(path)
-        return len(subpaths)
+        childs = self.tree.child_paths(path)
+        return len(childs)
         
     def push_prompter(self, parent_path, key, value_prompter):
         

@@ -6,6 +6,7 @@ from common.test_utils import TestUtils
 from config.object_schemater_impl import DefaultObjectSchemater
 from config.pitree_objecter import PiTreeObjectPrompter
 from config.value_obtainers_impls import ClassChoosePrompter
+from config.base_objecter import NO_VALUE
 
 
 
@@ -24,7 +25,7 @@ class TestPiTreeObjecter(unittest.TestCase):
             11, "SitMath", \
                     "ok, here are the pis", \
                     3.14, 3.15, 3.16, \
-                    None, \
+                    NO_VALUE, \
             "Lorem ipsum" \
             ])
         
@@ -52,7 +53,19 @@ class TestPiTreeObjecter(unittest.TestCase):
                     "AtomicValueOperation", \
                         "IntNumberAtom", \
                             1010, \
-            None \
+            "PolynomOperation", \
+                "okay, telling the cooeficients", \
+                "VariableAtom", \
+                    "x_0", \
+                3, \
+                "IntNumberAtom", \
+                    4, \
+                2, \
+                "FloatNumberAtom", \
+                    0.9, \
+                1, \
+                NO_VALUE,    
+            NO_VALUE \
              ])
         
         

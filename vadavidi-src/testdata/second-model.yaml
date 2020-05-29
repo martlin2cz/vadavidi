@@ -41,6 +41,18 @@ objects:
         item_prompter: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
             prompt_text: Specify the i-th operand
             clazz: BaseOperation 
+
+  PolynomOperation: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseOperation
+    fields:
+      cooeficients: !!python/object:config.value_obtainers_impls.DictPrompter
+        prompt_text: The poly cooeficients
+        key_prompter: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
+            prompt_text: Specify the cooeficient base
+            clazz: BaseAtom 
+        value_prompter: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+            prompt_text: Specify the coeifient exponent
+            type: int
   
   VariableAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseAtom
