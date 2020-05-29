@@ -39,7 +39,7 @@ objects:
       operands: !!python/object:config.value_obtainers_impls.ListPrompter
         prompt_text: The operands
         item_prompter: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
-            prompt_text: Specify the operand
+            prompt_text: Specify the i-th operand
             clazz: BaseOperation 
   
   VariableAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel

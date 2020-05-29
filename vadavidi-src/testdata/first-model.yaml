@@ -23,8 +23,7 @@ objects:
     fields:
       pis: !!python/object:config.value_obtainers_impls.ListPrompter
         prompt_text: Gimme pi values
-        item_prompter:        
-            pi: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-                prompt_text: Gimme pi
-                type: float
+        item_prompter:  !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+            prompt_text: Gimme pi
+            type: float
         

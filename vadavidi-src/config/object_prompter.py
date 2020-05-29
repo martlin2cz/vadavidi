@@ -1,7 +1,8 @@
 """
 TODO doc
 """
-from config.base_objecter import BaseObjectSchemater, BaseObjectBuilder
+from config.base_objecter import BaseObjectSchemater, BaseObjectBuilder,\
+    BaseObjectPrompter
 from config.value_obtainers_impls import \
     ObjectConstructionPrompter, ClassChoosePrompter, ListPrompter, DictPrompter
 from abc import abstractmethod
@@ -121,7 +122,7 @@ class DictCompositePrompter(BaseCompositePrompter):
             return None
 ################################################################################
 ################################################################################
-class ObjectPrompter():
+class DefaultObjectPrompter(BaseObjectPrompter):
     """
     TODO doc
     """
@@ -193,7 +194,7 @@ class ObjectPrompter():
                 return field_name
 ################################################################################
 
-    def set_value(self, value): 
+    def specify_value(self, value): 
         cp = self.current_composite_prompter()
         
         if isinstance(cp, ImplementingClassCompositePrompter):

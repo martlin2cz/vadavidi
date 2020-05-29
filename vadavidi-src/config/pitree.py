@@ -260,6 +260,9 @@ class PiTree:
     
     ####################################################################
     
+    def count(self):
+        return len(self.nodes)
+    
     def has(self, path):
         return path in self.nodes.keys()
     
@@ -291,6 +294,9 @@ class PiTree:
     
     ####################################################################
     
+    def __str__(self):
+        return "PiTree[{0}]".format(self.nodes)
+    
     def printit(self):
         for path in self.paths:
             value = self.nodes[path]
@@ -306,6 +312,9 @@ class PiTreeIterator:
         
     ####################################################################
 
+    def current(self):
+        return self.current_path
+
     def next(self):
         index = self.path_index(self.current_path)
         self.current_path = self.get_path(index + 1)
@@ -315,6 +324,14 @@ class PiTreeIterator:
         index = self.path_index(self.current_path)
         self.current_path = self.get_path(index - 1)    
         return self.current_path
+
+    def has_next(self):
+        index = self.path_index(self.current_path)
+        return index < self.tree.count()
+    
+    def has_previous(self):
+        index = self.path_index(self.current_path)
+        return index > 0
         
     ####################################################################
         
@@ -331,7 +348,8 @@ class PiTreeIterator:
         return lst.index(path)    
     
     
-
+    def __str__(self):
+        return "PiTreeIterator[current={0}]".format(self.current())
 
             
 ################################################################################

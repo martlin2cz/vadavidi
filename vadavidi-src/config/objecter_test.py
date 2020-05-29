@@ -11,7 +11,7 @@ from config.object_schemater_impl import DefaultObjectSchemater, \
 from config.object_schemater_producer import DefaultSchematerProducer
 from config.value_obtainers_impls import SimpleValuePrompter,\
     ClassChoosePrompter
-from config.object_prompter import ObjectPrompter
+from config.object_prompter import DefaultObjectPrompter
 
 
 ################################################################################
@@ -184,14 +184,14 @@ class TestObjecter(unittest.TestCase):
         schemater = DefaultObjectSchemater.load(file_name)
         
         builder = DefaultObjectBuilder()
-        prompter = ObjectPrompter(schemater, builder, clazz)
+        prompter = DefaultObjectPrompter(schemater, builder, clazz)
         
         for answer in answers:
             prompt = prompter.to_next()
             
             print("Prompting: " + str(prompt) + ", getting: " + str(answer)) #prompt.prompt_text
             
-            prompter.set_value(answer)
+            prompter.specify_value(answer)
         
         builder.printit()
 ################################################################################

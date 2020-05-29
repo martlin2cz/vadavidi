@@ -5,6 +5,8 @@ base APIs.
 from abc import abstractmethod, ABC
 
 ################################################################################
+NO_VALUE = None
+################################################################################
 ################################################################################
 class BaseValueObtainer(ABC):
     """ The general obtainer of one value of the field. Can be both expression 
@@ -94,3 +96,20 @@ class BaseObjectBuilder(ABC):
     @abstractmethod
     def printit(self):
         """ Just prints the currently collected structure """
+        
+################################################################################
+class BaseObjectPrompter(ABC):
+    """ The whole big object prompter. Lists all the particilar prompters and
+    collects the values obtained by user. At the end, the complete object may be
+    obtainable. """
+    
+    
+    @abstractmethod
+    def to_next(self):
+        """ Returns the next prompter """
+        
+    @abstractmethod
+    def specify_value(self, value):
+        """ Saves the given value and modifies the prompters chain regardin to 
+        that value """
+        
