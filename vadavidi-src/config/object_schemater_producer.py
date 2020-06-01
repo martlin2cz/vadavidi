@@ -4,16 +4,18 @@ and subclasses of some class. Optionally saves to file. """
 from builtins import staticmethod
 from functools import reduce
 import importlib
-from inspect import isabstract
+from inspect import isabstract, signature
 import inspect
 import pkgutil
-from typing import List
-from yaml import dump
-from yaml.dumper import Dumper
+from typing import List, Dict, get_args, Any, _GenericAlias
+import oyaml as yaml
 
 from config.object_schemater_impl import SchematerModel, SchematerObjectModel, \
     IMPORTER_SCHEMATER_FILE
-from config.value_obtainers_impls import SimpleValuePrompter
+from config.value_obtainers_impls import SimpleValuePrompter,\
+    ClassChoosePrompter, DictPrompter, ListPrompter
+from abc import ABC, ABCMeta
+from _collections import OrderedDict
 
 
 ################################################################################
@@ -79,7 +81,7 @@ class DefaultSchematerProducer:
         return SchematerModel(objects)
 
     def with_base(self, classes, base_class):
-        """ Lists the classes whose are definite and has given base_class """
+        """ Lists the classes whose are definite and has given base_celass """
         
         return list(filter(
             lambda c: self.has_predcestor(c, base_class), classes))
@@ -87,7 +89,7 @@ class DefaultSchematerProducer:
     def has_predcestor(self, clazz, base_class):
         """ Returns true if given class is definite and has given base_class """
         
-        if isabstract(clazz):
+        if isabstract(clazz) or clazz is ABCMeta:
             return False
         
         for base in clazz.mro():
@@ -107,24 +109,70 @@ class DefaultSchematerProducer:
         """ Converts the given class to ObjectModel """
         
         fields = self.list_fields(clazz)
-        fields_models = dict(map(lambda f: (f, self.model_of_field(f)), fields))
+        fields_models = OrderedDict(map( \
+                     lambda f: (f.name, self.model_of_field(f.annotation)), fields.values()))
         return SchematerObjectModel(base_class, fields_models)
 
     def list_fields(self, clazz):
         """ Lists the fields of the given class """
 
-        # TODO lists all
-        return list(filter(lambda e: not e.startswith("_"), \
-                           vars(clazz)))
+        sgn = signature(clazz.__init__)
+        parameters = dict(sgn.parameters)
+        return dict(filter(lambda p: p[0] is not "self", parameters.items()))
         
-    def model_of_field(self, field):
+    def model_of_field(self, type_annot):
         """ Constructs the model (Obtainer) of the given field """
         
-        # TODO ignores type
-        prompt_text = "Gimme " + str(field) + "!"
-        prompt_type = "Any"
-        return SimpleValuePrompter(prompt_text, prompt_type)
+        print("~~ " + str(type_annot) + " ~ " + str(type(type_annot)))
+        
+        if type(type_annot) == ABCMeta or type_annot is ABC:
+            return self.instance_choose_prompter(type_annot) 
+        
+        elif isinstance(type_annot, _GenericAlias) \
+            and type_annot._name == "List": 
+                #elif type_annot is List:
+                return self.list_prompter(type_annot)
+        
+        elif isinstance(type_annot, _GenericAlias) \
+            and type_annot._name == "Dict":
+                #elif type_annot is Dict:
+                return self.dict_prompter(type_annot)
+        
+        else:
+            return self.value_prompter(type_annot)
+        
+        #prompt_text = "Gimme " + str(field) + "!"
+        #prompt_type = "Any"
+        #return SimpleValuePrompter(prompt_text, prompt_type)
     
+    def instance_choose_prompter(self, type_annot):
+        clazz = type_annot.__name__ 
+        prompt_text = "Choose class implementing {0}".format(clazz)
+        return ClassChoosePrompter(clazz, prompt_text)
+    
+    def list_prompter(self, type_annot):
+        item_types = get_args(type_annot)
+        item_type = item_types[0] if len(item_types) > 0 else Any
+        
+        item_prompter = self.model_of_field(item_type)
+        prompt_text = "Specify list of {0}".format(item_type)
+        return ListPrompter(prompt_text, item_prompter)
+    
+    def dict_prompter(self, type_annot):
+        item_types = get_args(type_annot)
+        key_type = item_types[0] if len(item_types) > 0 else Any
+        value_type = item_types[1] if len(item_types) > 1 else Any
+        
+        key_prompter = self.model_of_field(key_type)
+        value_prompter = self.model_of_field(value_type)
+        prompt_text = "Specify dict of {0} and {1}".format(key_type, value_type)
+        return DictPrompter(prompt_text, key_prompter, value_prompter)
+        
+    def value_prompter(self, type_annot):
+        type = type_annot.__name__ 
+        prompt_text = "Specify value of type {0}".format(type)
+        return SimpleValuePrompter(prompt_text, type)
+        
 ################################################################################
 
     @staticmethod
@@ -132,7 +180,7 @@ class DefaultSchematerProducer:
         """ Saves the given model to given file """
         
         with open(file_name, "wt") as handle:
-            dump(model, handle, Dumper=Dumper)
+            yaml.dump(model, handle, Dumper=yaml.Dumper)
             
             
 ################################################################################
@@ -143,3 +191,5 @@ if __name__ == '__main__':
     producer.lookup_package_names = ["import_data"]
     model = producer.generate_model("BaseParser")
     DefaultSchematerProducer.save(model, IMPORTER_SCHEMATER_FILE)
+    
+    print("Done!")

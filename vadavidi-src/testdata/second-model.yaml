@@ -7,16 +7,6 @@ objects:
         prompt_text: The operand
         clazz: BaseAtom
 
-  UnaryOperation: !!python/object:config.object_schemater_impl.SchematerObjectModel
-    base: BaseOperation
-    fields:
-      operator: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: The operator
-        type: str
-      the_operand: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
-        prompt_text: The operand
-        clazz: BaseOperation
-
   BinaryOperation: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseOperation
     fields:
@@ -53,7 +43,17 @@ objects:
         value_prompter: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
             prompt_text: Specify the coeifient exponent
             type: int
-  
+
+  UnaryOperation: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseOperation
+    fields:
+      operator: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: The operator
+        type: str
+      the_operand: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
+        prompt_text: The operand
+        clazz: BaseOperation
+
   VariableAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseAtom
     fields:

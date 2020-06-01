@@ -6,7 +6,7 @@ from common.test_utils import TestUtils
 from config.object_schemater_impl import DefaultObjectSchemater
 from config.pitree_objecter import PiTreeObjectPrompter
 from config.value_obtainers_impls import ClassChoosePrompter
-from config.base_objecter import NO_VALUE
+from config.object_schemater_producer import DefaultSchematerProducer
 
 
 
@@ -14,8 +14,15 @@ from config.base_objecter import NO_VALUE
 class TestPiTreeObjecter(unittest.TestCase):
 
 ################################################################################
-
-   
+    def test_generate_objecter_model(self):
+        print(" === Generating the model")
+        producer = DefaultSchematerProducer()
+        producer.lookup_package_names = ["config"]
+        model = producer.generate_model("BaseOperation")
+        file = TestUtils.tfn("second-model-gen.yaml")
+        DefaultSchematerProducer.save(model, file)
+        print(" === Generated")
+        
 ################################################################################
 
     def test_first_object_prompter(self):
