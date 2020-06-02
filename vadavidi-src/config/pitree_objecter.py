@@ -3,7 +3,7 @@ The implementation of the objecter classes, but based on the pitree module.
 """
 from config.pitree import PiTree, PiTreePath, PiTreeIterator
 from config.base_objecter import BaseObjectPrompter, BaseValueObtainer,\
-    BaseObjectSchemater, NO_VALUE
+    BaseObjectSchemater, NO_VALUE, AbstractConfirmingPrompter
 from typing import Any
 from config.value_obtainers_impls import ClassChoosePrompter, ListPrompter,\
     DictPrompter
@@ -11,12 +11,14 @@ from dataclasses import dataclass
 
 ################################################################################
 @dataclass
-class AddMorePrompter(BaseValueObtainer):
+class AddMorePrompter(AbstractConfirmingPrompter):
     prompt_text: str = "Do you want to add more?"
 
 ################################################################################
-class DictTuplePrompter(BaseValueObtainer):
-    prompt_text: str = "Will now ask for the key and then value, ok?"
+@dataclass
+class DictTuplePrompter(AbstractConfirmingPrompter):
+    #TODO utilise somehow
+    prompt_text: str = "Will now ask for the key and then value, ok?" 
 
 ################################################################################
 class OpiTreeValueNode:

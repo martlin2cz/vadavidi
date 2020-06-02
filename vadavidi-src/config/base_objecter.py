@@ -3,6 +3,7 @@ The module responsible for the manipulating with the objects. Specifies the
 base APIs.
 """
 from abc import abstractmethod, ABC
+from dataclasses import dataclass
 
 ################################################################################
 NO_VALUE = object()
@@ -13,6 +14,30 @@ class BaseValueObtainer(ABC):
     or the specification what may be obtained from the user (and how)."""
     
     pass
+
+################################################################################
+@dataclass
+class AbstractValuePrompter(BaseValueObtainer, ABC):
+    """ The obtainer, which asks the user for the value. """
+    
+    prompt_text: str
+
+################################################################################
+@dataclass
+class AbstractConfirmingPrompter(AbstractValuePrompter, ABC):
+    """ The prompter which just asks user for confirmation, or, potentionally,
+    allowing to interrupt the chain. Could not have no value at all. """
+    
+    pass
+################################################################################
+@dataclass
+class AbstractValueExpression(BaseValueObtainer, ABC):
+    """ The obtainer, which just somehow produces the value without user 
+    interaction. """
+    
+    pass
+
+################################################################################
 ################################################################################
 class BaseObjectSchemater(ABC):
     """ Obtains the expected structure of the object to be constructed. """

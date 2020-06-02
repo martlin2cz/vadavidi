@@ -3,12 +3,12 @@ The implementation of the ValueObtainers.
 """
 from dataclasses import dataclass
 
-from config.base_objecter import BaseValueObtainer
+from config.base_objecter import AbstractValuePrompter, BaseValueObtainer
 from typing import List, Mapping
 
 ################################################################################
 @dataclass
-class SimpleValuePrompter(BaseValueObtainer):
+class SimpleValuePrompter(AbstractValuePrompter):
     """ The obtainer which need to get one simple single value known from 
     the user. """
 
@@ -19,7 +19,7 @@ class SimpleValuePrompter(BaseValueObtainer):
     
 ################################################################################
 @dataclass
-class ObjectConstructionPrompter(BaseValueObtainer):
+class ObjectConstructionPrompter(AbstractValuePrompter):
     """ The main prompter for the object construction. """
     
     clazz: str
@@ -27,7 +27,7 @@ class ObjectConstructionPrompter(BaseValueObtainer):
     
 ################################################################################
 @dataclass
-class ClassChoosePrompter(BaseValueObtainer):
+class ClassChoosePrompter(AbstractValuePrompter):
     """ The obtainer which lets the user to choose the particular class. """
 
     clazz: str
@@ -35,9 +35,8 @@ class ClassChoosePrompter(BaseValueObtainer):
 
 ################################################################################
 @dataclass
-class ListPrompter(BaseValueObtainer):
+class ListPrompter(AbstractValuePrompter):
     """ The obtainer which need to get list of values from the user. """
-
     # the human readable prompt text
     prompt_text: str
     # the obtainer for the particular items
@@ -45,9 +44,9 @@ class ListPrompter(BaseValueObtainer):
     
 ################################################################################
 @dataclass
-class DictPrompter(BaseValueObtainer):
+class DictPrompter(AbstractValuePrompter):
     """ The obtainer which need to get dict of values from the user. """
-
+ 
     # the human readable prompt text
     prompt_text: str
     # the obtainer for the particular items keys

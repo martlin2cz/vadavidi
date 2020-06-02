@@ -14,11 +14,11 @@ objects:
         prompt_text: The operator
         type: str
       first_operand: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
-        prompt_text: The first operand
         clazz: BaseOperation
+        prompt_text: The first operand
       second_operand: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
-        prompt_text: The second operand
         clazz: BaseOperation   
+        prompt_text: The second operand
 
   NaryOperation: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseOperation
@@ -29,8 +29,8 @@ objects:
       operands: !!python/object:config.value_obtainers_impls.ListPrompter
         prompt_text: The operands
         item_prompter: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
-            prompt_text: Specify the i-th operand
             clazz: BaseOperation 
+            prompt_text: Specify the i-th operand
 
   PolynomOperation: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseOperation
@@ -38,8 +38,8 @@ objects:
       cooeficients: !!python/object:config.value_obtainers_impls.DictPrompter
         prompt_text: The poly cooeficients
         key_prompter: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
-            prompt_text: Specify the cooeficient base
             clazz: BaseAtom 
+            prompt_text: Specify the cooeficient base
         value_prompter: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
             prompt_text: Specify the coeifient exponent
             type: int
@@ -51,30 +51,8 @@ objects:
         prompt_text: The operator
         type: str
       the_operand: !!python/object:config.value_obtainers_impls.ClassChoosePrompter
-        prompt_text: The operand
         clazz: BaseOperation
-
-  VariableAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
-    base: BaseAtom
-    fields:
-      variable_name: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: The variable name
-        type: str
-
-  IntNumberAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
-    base: BaseAtom
-    fields:
-      int_value: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: The int value
-        type: int
-
-  FloatNumberAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
-    base: BaseAtom
-    fields:
-      float_value: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: The float value
-        type: float
-
+        prompt_text: The operand
 
   ComplexNumberAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseAtom
@@ -85,3 +63,24 @@ objects:
       imaginary_value: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
         prompt_text: The imaginary value
         type: float
+
+  FloatNumberAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseAtom
+    fields:
+      float_value: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: The float value
+        type: float
+
+  IntNumberAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseAtom
+    fields:
+      int_value: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: The int value
+        type: int
+
+  VariableAtom: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseAtom
+    fields:
+      variable_name: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: The variable name
+        type: str

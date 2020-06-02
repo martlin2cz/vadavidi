@@ -1,92 +1,47 @@
 !!python/object:config.object_schemater_impl.SchematerModel
 objects:
-  CSVParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
-    base: BaseParser
-    fields:
-      delimiter: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme delimiter!
-        type: Any
-      doublequote: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme doublequote!
-        type: Any
-      escapechar: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme escapechar!
-        type: Any
-      fracte: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme fracte!
-        type: Any
-      lineterminator: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme lineterminator!
-        type: Any
-      parse_fraction: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme parse_fraction!
-        type: Any
-      quotechar: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme quotechar!
-        type: Any
-      skipinitialspace: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme skipinitialspace!
-        type: Any
-      strict: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme strict!
-        type: Any
-      stringify_fraction: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme stringify_fraction!
-        type: Any
-  ExcelCSVParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
-    base: BaseParser
-    fields:
-      delimiter: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme delimiter!
-        type: Any
-      doublequote: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme doublequote!
-        type: Any
-      escapechar: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme escapechar!
-        type: Any
-      lineterminator: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme lineterminator!
-        type: Any
-      quotechar: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme quotechar!
-        type: Any
-      skipinitialspace: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme skipinitialspace!
-        type: Any
-      strict: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme strict!
-        type: Any
-  PatternBasedLinedParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
-    base: BaseParser
-    fields:
-      parse: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme parse!
-        type: Any
-      parse_line: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme parse_line!
-        type: Any
   SimpleCSVParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseParser
     fields:
-      csv: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme csv!
-        type: Any
-      parse: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme parse!
-        type: Any
+      args: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as args
+        type: _empty
+      kwargs: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as kwargs
+        type: _empty
   XMLElementParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
     base: BaseParser
     fields:
-      fracte: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme fracte!
-        type: Any
-      parsePart: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme parsePart!
-        type: Any
-      parse_fraction: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme parse_fraction!
-        type: Any
-      stringify_fraction: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
-        prompt_text: Gimme stringify_fraction!
-        type: Any
+      args: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as args
+        type: _empty
+      kwargs: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as kwargs
+        type: _empty
+  CSVParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseParser
+    fields:
+      args: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as args
+        type: _empty
+      kwargs: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as kwargs
+        type: _empty
+  ExcelCSVParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseParser
+    fields:
+      args: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as args
+        type: _empty
+      kwargs: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as kwargs
+        type: _empty
+  PatternBasedLinedParser: !!python/object:config.object_schemater_impl.SchematerObjectModel
+    base: BaseParser
+    fields:
+      args: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as args
+        type: _empty
+      kwargs: !!python/object:config.value_obtainers_impls.SimpleValuePrompter
+        prompt_text: Specify value of type _empty as kwargs
+        type: _empty
